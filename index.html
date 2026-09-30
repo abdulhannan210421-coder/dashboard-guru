@@ -193,8 +193,15 @@
       </div>
     </div>
 
-    <!-- Jam Istiwa Digital (Gradasi Hijau Gelap) -->
-    <div class="flex items-center gap-4">
+    <!-- Jam Istiwa Digital & Hitung Mundur Sholat -->
+    <div class="flex items-center gap-3">
+      <!-- WIDGET HITUNG MUNDUR SHOLAT BERIKUTNYA -->
+      <div class="hidden sm:flex flex-col items-center justify-center bg-gradient-to-b from-amber-500/10 to-amber-600/20 border border-amber-400/60 px-4 py-1.5 rounded-2xl shadow-sm text-center">
+        <span id="next-prayer-name" class="text-[10px] uppercase font-black tracking-wider text-amber-900">⏳ MENJELANG SHOLAT</span>
+        <span id="next-prayer-countdown" class="text-xl font-black text-amber-950 font-mono tracking-tight">-00:00:00</span>
+      </div>
+
+      <!-- Jam Istiwa Digital -->
       <div class="bg-gradient-to-r from-emerald-800 via-teal-900 to-green-900 text-white px-5 py-2 rounded-2xl shadow-lg shadow-emerald-900/20 text-center border border-emerald-700/50">
         <div id="live-clock" class="text-3xl font-black tracking-wider">00:00:00</div>
         <div class="text-[10px] uppercase font-extrabold tracking-widest text-emerald-200">☀️ JAM ISTIWA LOKAL</div>
@@ -553,14 +560,44 @@
         { id: 'box-isya', name: 'ISYA', time: p.isya }
       ];
 
-      // Highlight Waktu Sholat Berikutnya
-      let nextSholat = listSholat.find(s => s.time > nowIstiwaHM);
-      if (!nextSholat) nextSholat = listSholat[0];
+      // HITUNG MUNDUR & PENCARIAN WAKTU SHOLAT BERIKUTNYA
+      const currentIstiwaSec = istiwaNow.getHours() * 3600 + istiwaNow.getMinutes() * 60 + istiwaNow.getSeconds();
+      let nextSholatObj = null;
+      let diffSec = 0;
 
+      for (let s of listSholat) {
+        const parts = s.time.split(':');
+        const pSec = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60;
+        if (pSec > currentIstiwaSec) {
+          nextSholatObj = s;
+          diffSec = pSec - currentIstiwaSec;
+          break;
+        }
+      }
+
+      // Jika sudah melewati Isya, waktu berikutnya adalah Subuh esok hari
+      if (!nextSholatObj) {
+        nextSholatObj = listSholat[0]; // Subuh
+        const parts = nextSholatObj.time.split(':');
+        const pSec = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60;
+        diffSec = (24 * 3600 - currentIstiwaSec) + pSec;
+      }
+
+      // Format -HH:MM:SS
+      const cdH = String(Math.floor(diffSec / 3600)).padStart(2, '0');
+      const cdM = String(Math.floor((diffSec % 3600) / 60)).padStart(2, '0');
+      const cdS = String(diffSec % 60).padStart(2, '0');
+
+      const nameEl = document.getElementById('next-prayer-name');
+      const countEl = document.getElementById('next-prayer-countdown');
+      if (nameEl) nameEl.innerText = `⏳ MENJELANG ${nextSholatObj.name}`;
+      if (countEl) countEl.innerText = `-${cdH}:${cdM}:${cdS}`;
+
+      // Highlight Box Waktu Sholat di Ribbon Header
       listSholat.forEach(s => {
         const box = document.getElementById(s.id);
         if (box) {
-          if (s.id === nextSholat.id) {
+          if (s.id === nextSholatObj.id) {
             box.className = "px-3.5 py-1.5 rounded-xl text-center border bg-emerald-800 text-white shadow-md shadow-emerald-900/30 font-bold scale-105 transition-all";
             box.querySelector('span').className = "text-[9px] font-extrabold text-emerald-100 uppercase block tracking-wider";
             box.querySelector('span:nth-child(2)').className = "text-sm font-black text-white";
