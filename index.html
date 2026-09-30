@@ -971,7 +971,7 @@
 
       const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
       const bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-      document.getElementById('info-tanggal').innerText = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()} M  |  ${getHijriDate(now)}`;
+      document.getElementById('info-tanggal').innerText = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()} M | ${getHijriDate(now)}`;
 
       updateHeaderPrayerRibbon();
 
@@ -988,7 +988,7 @@
     async function fetchData(retryCount = 0) {
       const statusBadge = document.getElementById('api-status-badge');
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
 
       try {
         const res = await fetch(API_URL, { signal: controller.signal });
@@ -1003,11 +1003,13 @@
           statusBadge.innerText = `🟢 Terhubung (${(rawData.data_guru||[]).length} Guru, ${(rawData.jadwal_pelajaran||[]).length} Jadwal)`;
           processData();
           return;
+        } else {
+          throw new Error("Format data tidak valid");
         }
       } catch (err) {
         clearTimeout(timeoutId);
-        if (retryCount < 3) {
-          setTimeout(() => fetchData(retryCount + 1), 3000);
+        if (retryCount < 2) {
+          setTimeout(() => fetchData(retryCount + 1), 10000);
           return;
         }
         if (rawData) {
@@ -1079,6 +1081,7 @@
 
       const currentKey = activeJadwalList.map(item => item.id_guru + item.kelas + item.jam_mulai).join('|') + `_${isIdleTomorrowMode}`;
       if (lastRenderedKey !== currentKey) {
+        currentJadwalIndex = 0;
         renderCoverflowDOM(menitSekarangIstiwa);
         lastRenderedKey = currentKey;
       } else {
@@ -1292,8 +1295,9 @@
       }).join(' &nbsp;•&nbsp; ');
     }
 
-    setInterval(fetchData, 30000);
-    setInterval(processData, 10000);
+    // EXECUTOR
+    setInterval(fetchData, 180000); // Sinkronisasi Google Sheets 3 menit sekali
+    setInterval(processData, 10000); // Refresh tampilan lokal 10 detik sekali
     fetchData();
   </script>
 </body>
