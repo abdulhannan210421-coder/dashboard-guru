@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Signage - Jadwal Guru & Waktu Adzan Realtime</title>
+
+  <!-- Tailwind CSS & Font -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Library Perhitungan Waktu Sholat Akurat (Adhan.js via CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/adhan/3.0.0/Adhan.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    
+    .bg-vibrant {
+      background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 40%, #e0e7ff 100%);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 20px 40px -15px rgba(0, 100, 225, 0.12);
+    }
+
+    /* ================= iOS COVER FLOW 3D REAL ANIMATION ================= */
+    .coverflow-container {
+      perspective: 1200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .coverflow-card {
+      position: absolute;
+      width: 82%;
+      max-width: 480px;
+      transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), 
+                  opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), 
+                  filter 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+      transform-style: preserve-3d;
+      border-radius: 1.75rem;
+      padding: 1.75rem;
+      background: rgba(255, 255, 255, 0.96);
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.12);
+      will-change: transform, opacity, filter;
+    }
+
+    .coverflow-card.active {
+      transform: translateX(0) scale(1.06) translateZ(0);
+      z-index: 30;
+      opacity: 1;
+      filter: blur(0px);
+      box-shadow: 0 30px 60px -12px rgba(37, 99, 235, 0.28), 0 0 0 2px #3b82f6;
+    }
+
+    .coverflow-card.prev {
+      transform: translateX(-52%) scale(0.8) rotateY(26deg) translateZ(-120px);
+      z-index: 20;
+      opacity: 0.45;
+      filter: blur(5px);
+      pointer-events: none;
+    }
+
+    .coverflow-card.next {
+      transform: translateX(52%) scale(0.8) rotateY(-26deg) translateZ(-120px);
+      z-index: 20;
+      opacity: 0.45;
+      filter: blur(5px);
+      pointer-events: none;
+    }
+
+    .coverflow-card.hidden-left {
+      transform: translateX(-110%) scale(0.5) rotateY(40deg) translateZ(-250px);
+      z-index: 10;
+      opacity: 0;
+      filter: blur(10px);
+      pointer-events: none;
+    }
+
+    .coverflow-card.hidden-right {
+      transform: translateX(110%) scale(0.5) rotateY(-40deg) translateZ(-250px);
+      z-index: 10;
+      opacity: 0;
+      filter: blur(10px);
+      pointer-events: none;
+    }
+
+    /* ================= TELEPROMPTER VERTICAL SCROLL ================= */
+    .teleprompter-wrapper {
+      position: relative;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .teleprompter-content {
+      animation: teleprompterScroll 32s linear infinite;
+    }
+
+    .teleprompter-content:hover {
+      animation-play-state: paused;
+    }
+
+    @keyframes teleprompterScroll {
+      0% { transform: translateY(0%); }
+      100% { transform: translateY(-50%); }
+    }
+
+    /* ================= MARQUEE GURU PIKET ================= */
+    @keyframes marqueeScroll {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .animate-marquee {
+      display: flex;
+      width: max-content;
+      animation: marqueeScroll 25s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative" onclick="enableAudioOnTV()">
+
+  <!-- Audio Element Adzan -->
+  <audio id="audio-adzan" preload="auto">
+    <source src="https://cdn.islamic.finder.org/audio/adthan/1.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Overlay Pemicu Suara Smart TV (Akan hilang begitu diklik) -->
+  <div id="audio-unlock-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white p-6 transition-all duration-500">
+    <div class="bg-blue-600 p-6 rounded-full animate-bounce mb-6 shadow-2xl shadow-blue-500/50">
+      <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+    </div>
+    <h2 class="text-3xl font-black mb-2 text-center">AKTIFKAN SUARA ADZAN TV</h2>
+    <p class="text-slate-300 mb-8 text-center max-width-md">Klik di mana saja pada layar TV ini 1x untuk mengizinkan web memutar suara Adzan secara otomatis.</p>
+    <button class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-8 py-4 rounded-2xl text-xl shadow-xl transition transform active:scale-95">
+      🔔 Klik Disini Untuk Memulai
+    </button>
+  </div>
+
+  <!-- Modal Layar Penuh Adzan (Akan muncul saat masuk waktu sholat) -->
+  <div id="modal-adzan" class="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-950 text-white z-40 hidden flex-col items-center justify-center p-8 text-center animate-fade-in">
+    <div class="bg-emerald-500/20 p-6 rounded-full mb-6 border border-emerald-400/30 animate-pulse">
+      <span class="text-6xl">🕌</span>
+    </div>
+    <span class="bg-emerald-500/30 text-emerald-300 font-extrabold text-sm px-4 py-1.5 rounded-full uppercase tracking-widest mb-3 border border-emerald-400/30">
+      MEMASUKI WAKTU SHOLAT
+    </span>
+    <h1 id="nama-sholat-adzan" class="text-6xl font-black tracking-tight text-white mb-4">ZHUHUR</h1>
+    <p class="text-emerald-100 text-xl max-w-lg mb-8 font-medium">Mari sejenak menghentikan aktivitas dan menunaikan ibadah sholat secara berjamaah.</p>
+    <div id="countdown-adzan" class="text-2xl font-bold font-mono bg-white/10 px-6 py-2 rounded-xl border border-white/10">
+      Kembali ke jadwal dalam: 03:00
+    </div>
+  </div>
+
+  <!-- ================= HEADER CERAH ================= -->
+  <header class="glass-card rounded-2xl p-3.5 px-6 flex justify-between items-center flex-shrink-0 mb-4">
+    <div class="flex items-center gap-4">
+      <div class="bg-blue-600 text-white p-3 rounded-xl shadow-lg shadow-blue-500/30">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">INFORMASI JADWAL GURU</h1>
+        <div class="flex items-center gap-3 mt-0.5">
+          <p id="info-tanggal" class="text-blue-600 font-semibold text-sm">Memuat tanggal Masehi & Hijriyah...</p>
+          <span id="api-status-badge" class="bg-slate-200 text-slate-600 text-[10px] font-bold px-2.5 py-0.5 rounded-full">Menghubungkan API...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jam Istiwa Digital & Jadwal Sholat -->
+    <div class="flex items-center gap-4">
+      <!-- Info Sholat Berikutnya -->
+      <div class="text-right hidden md:block">
+        <span id="label-sholat-next" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Sholat Berikutnya</span>
+        <span id="time-sholat-next" class="text-base font-extrabold text-emerald-600">--:--</span>
+      </div>
+
+      <!-- Jam Istiwa Utama -->
+      <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-2 rounded-2xl shadow-lg shadow-teal-500/20 text-center">
+        <div id="live-clock" class="text-3xl font-black tracking-wider">00:00:00</div>
+        <div class="text-[10px] uppercase font-bold tracking-widest text-emerald-100">☀️ JAM ISTIWA LOKAL</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= KONTEN UTAMA (SPLIT SCREEN 60:40) ================= -->
+  <main class="grid grid-cols-12 gap-5 flex-1 min-h-0 mb-4 overflow-hidden">
+
+    <!-- SISI KIRI (60%): iOS COVER FLOW 3D CAROUSEL -->
+    <section class="col-span-7 flex flex-col h-full overflow-hidden">
+      <div class="flex justify-between items-center mb-2 px-2 flex-shrink-0">
+        <span class="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span> Sorotan Guru Mengajar (iOS 3D Cover Flow)
+        </span>
+        <span id="counter-rolling" class="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full">0 / 0</span>
+      </div>
+
+      <div id="coverflow-viewport" class="glass-card rounded-3xl flex-1 relative overflow-hidden flex items-center justify-center p-4 border-2 border-white">
+        <div id="coverflow-stage" class="coverflow-container">
+          <div class="text-slate-400 font-medium">Memuat kartu guru...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SISI KANAN (40%): TELEPROMPTER AUTO-SCROLL TABLE -->
+    <section class="col-span-5 flex flex-col h-full overflow-hidden">
+      <div class="mb-2 px-2 flex justify-between items-center flex-shrink-0">
+        <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">📜 Teleprompter Ringkasan KBM Jam Ini</span>
+        <span class="text-[10px] bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded-full">Auto-Scroll</span>
+      </div>
+
+      <div class="glass-card rounded-3xl p-4 flex-1 overflow-hidden border-2 border-white flex flex-col">
+        <table class="w-full text-left text-xs uppercase font-bold text-slate-400 border-b border-slate-200 pb-2 mb-2 flex-shrink-0">
+          <thead>
+            <tr>
+              <th class="w-1/6 pl-2">Kelas</th>
+              <th class="w-2/6">Mapel</th>
+              <th class="w-2/6">Guru</th>
+              <th class="w-1/6 text-right pr-2">Ruang</th>
+            </tr>
+          </thead>
+        </table>
+
+        <div class="teleprompter-wrapper flex-1">
+          <div id="teleprompter-track" class="teleprompter-content">
+            <table class="w-full text-left text-sm divide-y divide-slate-100">
+              <tbody id="tabel-teleprompter-body" class="font-medium text-slate-700">
+                <tr><td colspan="4" class="py-8 text-center text-slate-400">Memuat teleprompter...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FOOTER / RUNNING TICKER GURU PIKET ================= -->
+  <footer class="glass-card rounded-2xl p-2.5 px-4 flex items-center gap-4 overflow-hidden border-2 border-amber-300/80 bg-gradient-to-r from-amber-500/10 via-white/90 to-amber-500/10 flex-shrink-0">
+    <div class="bg-amber-500 text-white font-extrabold text-xs px-4 py-2 rounded-xl flex items-center gap-2 whitespace-nowrap shadow-md shadow-amber-500/20 flex-shrink-0">
+      <span>🛡️ GURU PIKET HARI INI</span>
+    </div>
+    
+    <div class="overflow-hidden w-full relative">
+      <div id="piket-ticker" class="flex items-center gap-8 font-semibold text-slate-700 text-sm">
+        <span>Memuat data guru piket...</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbydTT9GCsR3pddbEeHfeDOdKq_w6SkG8AsmgsK1EHT9L2HnUSJ2nraaTbTHsoK68kl2/exec";
+    
+    // Koordinat Pasuruan / Sidogiri untuk Jam Istiwa & Waktu Sholat
+    const LATITUDE = -7.645600;
+    const LONGITUDE = 112.836500;
+
+    let rawData = JSON.parse(localStorage.getItem('jadwal_signage_cache') || 'null');
+    let currentJadwalIndex = 0;
+    let activeJadwalList = [];
+    let coverflowTimer = null;
+    let lastRenderedCount = -1;
+    let audioUnlocked = false;
+    let adzanActive = false;
+
+    // Unlock Audio Context untuk Smart TV
+    function enableAudioOnTV() {
+      if (audioUnlocked) return;
+      const audio = document.getElementById('audio-adzan');
+      audio.play().then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audioUnlocked = true;
+        document.getElementById('audio-unlock-overlay').style.display = 'none';
+        console.log("Audio Adzan Smart TV Berhasil Diaktifkan!");
+      }).catch(err => {
+        console.warn("Gagal unlock audio:", err);
+      });
+    }
+
+    // ================= KALKULASI WAKTU SHOLAT OFFLINE (AKURAT SELAMANYA) =================
+    function getPrayerTimesToday() {
+      if (typeof adhan === 'undefined') return null;
+
+      const coordinates = new adhan.Coordinates(LATITUDE, LONGITUDE);
+      const date = new Date();
+      const params = adhan.CalculationMethod.Singapore(); // MABIMS Standar Kemenag RI
+      params.fajrAngle = 20;
+      params.ishaAngle = 18;
+
+      const prayerTimes = new adhan.PrayerTimes(coordinates, date, params);
+
+      // Tambah +2 Menit Ihtiyati Standar Kemenag
+      const addIhtiyati = (d) => new Date(d.getTime() + 2 * 60000);
+
+      return {
+        subuh: addIhtiyati(prayerTimes.fajr),
+        dzuhur: addIhtiyati(prayerTimes.dhuhr),
+        ashar: addIhtiyati(prayerTimes.asr),
+        maghrib: addIhtiyati(prayerTimes.maghrib),
+        isya: addIhtiyati(prayerTimes.isha)
+      };
+    }
+
+    function checkAndTriggerAdzan() {
+      const pTimes = getPrayerTimesToday();
+      if (!pTimes) return;
+
+      const now = new Date();
+      const formatHM = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      const nowHM = formatHM(now);
+
+      const listSholat = [
+        { name: 'SUBUH', time: formatHM(pTimes.subuh), dateObj: pTimes.subuh },
+        { name: 'DZUHUR', time: formatHM(pTimes.dzuhur), dateObj: pTimes.dzuhur },
+        { name: 'ASHAR', time: formatHM(pTimes.ashar), dateObj: pTimes.ashar },
+        { name: 'MAGHRIB', time: formatHM(pTimes.maghrib), dateObj: pTimes.maghrib },
+        { name: 'ISYA', time: formatHM(pTimes.isya), dateObj: pTimes.isya }
+      ];
+
+      // Update Tampilan Sholat Berikutnya di Header
+      let nextSholat = listSholat.find(s => s.dateObj > now);
+      if (!nextSholat) nextSholat = listSholat[0]; // besok Subuh
+
+      document.getElementById('label-sholat-next').innerText = `Sholat Berikutnya (${nextSholat.name})`;
+      document.getElementById('time-sholat-next').innerText = nextSholat.time;
+
+      // Pemicu Adzan Pas Detik ke-00
+      if (now.getSeconds() === 0 && !adzanActive) {
+        const matchingSholat = listSholat.find(s => s.time === nowHM);
+        if (matchingSholat) {
+          triggerAdzanScreen(matchingSholat.name);
+        }
+      }
+    }
+
+    function triggerAdzanScreen(namaSholat) {
+      adzanActive = true;
+      const modal = document.getElementById('modal-adzan');
+      document.getElementById('nama-sholat-adzan').innerText = namaSholat;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      // Putar Audio Adzan
+      const audio = document.getElementById('audio-adzan');
+      audio.currentTime = 0;
+      audio.play().catch(e => console.warn("Audio autoplay blocked:", e));
+
+      // Timer Mundur 3 Menit Tampilan Adzan
+      let duration = 180;
+      const countdownEl = document.getElementById('countdown-adzan');
+
+      const cdInterval = setInterval(() => {
+        duration--;
+        const m = String(Math.floor(duration / 60)).padStart(2, '0');
+        const s = String(duration % 60).padStart(2, '0');
+        countdownEl.innerText = `Kembali ke jadwal dalam: ${m}:${s}`;
+
+        if (duration <= 0) {
+          clearInterval(cdInterval);
+          modal.classList.remove('flex');
+          modal.classList.add('hidden');
+          audio.pause();
+          adzanActive = false;
+        }
+      }, 1000);
+    }
+
+    // Helper Pembersih String Jam
+    function cleanTimeStr(val) {
+      if (!val) return "00:00";
+      const str = val.toString().trim();
+      const match = str.match(/(\d{1,2}):(\d{2})/);
+      if (match) {
+        const h = String(match[1]).padStart(2, '0');
+        const m = String(match[2]).padStart(2, '0');
+        return `${h}:${m}`;
+      }
+      return str;
+    }
+
+    // Positional Column Parsers
+    function parseJadwalRow(item) {
+      if (item._c0 !== undefined && item._c1 !== undefined) {
+        return {
+          hari: String(item._c0).trim().toUpperCase(),
+          jam_mulai: cleanTimeStr(item._c1),
+          jam_selesai: cleanTimeStr(item._c2),
+          kelas: String(item._c3).trim(),
+          ruang: String(item._c4).trim(),
+          id_guru: String(item._c5).trim(),
+          mapel: String(item._c6).trim()
+        };
+      }
+      const vals = Object.values(item);
+      return {
+        hari: String(vals[0] || '').trim().toUpperCase(),
+        jam_mulai: cleanTimeStr(vals[1]),
+        jam_selesai: cleanTimeStr(vals[2]),
+        kelas: String(vals[3] || '').trim(),
+        ruang: String(vals[4] || '').trim(),
+        id_guru: String(vals[5] || '').trim(),
+        mapel: String(vals[6] || '').trim()
+      };
+    }
+
+    function parseGuruRow(item) {
+      if (item._c0 !== undefined && item._c1 !== undefined) {
+        return {
+          id_guru: String(item._c0).trim(),
+          nama_guru: String(item._c1).trim(),
+          domisili: String(item._c2).trim(),
+          alamat: String(item._c3).trim(),
+          status_guru: String(item._c4).trim(),
+          foto: String(item._c5 || '').trim()
+        };
+      }
+      const vals = Object.values(item);
+      return {
+        id_guru: String(vals[0] || '').trim(),
+        nama_guru: String(vals[1] || '').trim(),
+        domisili: String(vals[2] || '').trim(),
+        alamat: String(vals[3] || '').trim(),
+        status_guru: String(vals[4] || '').trim(),
+        foto: String(vals[5] || '').trim()
+      };
+    }
+
+    function parsePiketRow(item) {
+      if (item._c0 !== undefined && item._c1 !== undefined) {
+        return {
+          hari: String(item._c0).trim().toUpperCase(),
+          jam_mulai: cleanTimeStr(item._c1),
+          jam_selesai: cleanTimeStr(item._c2),
+          id_guru: String(item._c3).trim(),
+          area_piket: String(item._c4 || '').trim()
+        };
+      }
+      const vals = Object.values(item);
+      return {
+        hari: String(vals[0] || '').trim().toUpperCase(),
+        jam_mulai: cleanTimeStr(vals[1]),
+        jam_selesai: cleanTimeStr(vals[2]),
+        id_guru: String(vals[3] || '').trim(),
+        area_piket: String(vals[4] || '').trim()
+      };
+    }
+
+    function timeToMinutes(val) {
+      if (val === null || val === undefined || val === "") return -1;
+      const str = val.toString().trim();
+
+      const match = str.match(/(\d{1,2}):(\d{2})/);
+      if (match) {
+        return (parseInt(match[1], 10) * 60) + parseInt(match[2], 10);
+      }
+
+      const num = parseFloat(str);
+      if (!isNaN(num) && num >= 0 && num < 1) {
+        return Math.round(num * 24 * 60);
+      }
+
+      return -1;
+    }
+
+    function getDirectDriveImg(url) {
+      if (!url) return 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+      const match = url.toString().match(/\/d\/([a-zA-Z0-9_-]+)/) || url.toString().match(/id=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        return `https://lh3.googleusercontent.com/d/${match[1]}`;
+      }
+      return url;
+    }
+
+    function getIstiwaTime(now) {
+      const startOfYear = new Date(now.getFullYear(), 0, 0);
+      const diff = now - startOfYear;
+      const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      const gamma = (2 * Math.PI / 365) * (dayOfYear - 1 + (now.getHours() - 12) / 24);
+      const eotMinutes = 229.18 * (
+        0.000075 +
+        0.001868 * Math.cos(gamma) -
+        0.032077 * Math.sin(gamma) -
+        0.014615 * Math.cos(2 * gamma) -
+        0.040849 * Math.sin(2 * gamma)
+      );
+
+      const lonCorrectionMinutes = (LONGITUDE - 105) * 4;
+      const totalAdjustmentMs = (lonCorrectionMinutes + eotMinutes) * 60 * 1000;
+
+      return new Date(now.getTime() + totalAdjustmentMs);
+    }
+
+    function getHijriDate(date) {
+      const islamicMonths = [
+        "Muharram", "Safar", "Rabi'ul Awwal", "Rabi'ul Akhir",
+        "Jumadil Ula", "Jumadil Akhirah", "Rajab", "Sya'ban",
+        "Ramadhan", "Syawwal", "Dzulqa'dah", "Dzulhijjah"
+      ];
+
+      const d = date.getDate();
+      const m = date.getMonth() + 1;
+      const y = date.getFullYear();
+
+      let julianDay = Math.floor((1461 * (y + 4800 + Math.floor((m - 14) / 12))) / 4) +
+                      Math.floor((367 * (m - 2 - 12 * (Math.floor((m - 14) / 12)))) / 12) -
+                      Math.floor((3 * (Math.floor((y + 4900 + Math.floor((m - 14) / 12)) / 100))) / 4) +
+                      d - 32075;
+
+      let l = julianDay - 1948440 + 10632;
+      let n = Math.floor((l - 1) / 10631);
+      l = l - 10631 * n + 354;
+      let j = (Math.floor((10985 - l) / 5316)) * (Math.floor((50 * l) / 17719)) +
+              (Math.floor(l / 5670)) * (Math.floor((43 * l) / 15238));
+      l = l - (Math.floor((30 - j) / 15)) * (Math.floor((17719 * j) / 50)) -
+          (Math.floor(j / 16)) * (Math.floor((15238 * j) / 43)) + 29;
+
+      let month = Math.floor((24 * l) / 709);
+      let day = l - Math.floor((709 * month) / 24);
+      let year = 30 * n + j - 30;
+
+      return `${day} ${islamicMonths[month - 1]} ${year} H`;
+    }
+
+    function updateClockAndDates() {
+      const now = new Date();
+      const istiwaNow = getIstiwaTime(now);
+
+      const jam = String(istiwaNow.getHours()).padStart(2, '0');
+      const menit = String(istiwaNow.getMinutes()).padStart(2, '0');
+      const detik = String(istiwaNow.getSeconds()).padStart(2, '0');
+      document.getElementById('live-clock').innerText = `${jam}:${menit}:${detik}`;
+
+      const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      const bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      const masehiStr = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()} M`;
+
+      const hijriStr = getHijriDate(now);
+
+      document.getElementById('info-tanggal').innerText = `${masehiStr}  |  ${hijriStr}`;
+
+      // Cek Waktu Adzan Setiap Detik
+      checkAndTriggerAdzan();
+
+      if (jam === "00" && menit === "00" && detik === "05") {
+        window.location.reload();
+      }
+    }
+
+    setInterval(updateClockAndDates, 1000);
+    updateClockAndDates();
+
+    // ================= SIKLUS AMBIL DATA ANTI-GAGAL 24/7 =================
+    async function fetchData(retryCount = 0) {
+      const statusBadge = document.getElementById('api-status-badge');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+      try {
+        const res = await fetch(API_URL, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error(`HTTP Error Status ${res.status}`);
+
+        const newData = await res.json();
+
+        if (newData && (newData.data_guru || newData.jadwal_pelajaran)) {
+          rawData = newData;
+          localStorage.setItem('jadwal_signage_cache', JSON.stringify(newData));
+
+          const totalGuru = (rawData.data_guru || []).length;
+          const totalJadwal = (rawData.jadwal_pelajaran || []).length;
+
+          statusBadge.className = "bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full";
+          statusBadge.innerText = `🟢 Terhubung (${totalGuru} Guru, ${totalJadwal} Jadwal)`;
+
+          processData();
+          return;
+        }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        console.warn(`[24/7 Signage Retry ${retryCount + 1}] Network issue:`, err);
+
+        if (retryCount < 3) {
+          setTimeout(() => fetchData(retryCount + 1), 3000);
+          return;
+        }
+
+        if (rawData) {
+          statusBadge.className = "bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full";
+          statusBadge.innerText = `🟡 Mode Offline Cache (Mencoba Ulang...)`;
+          processData();
+        } else {
+          statusBadge.className = "bg-rose-100 text-rose-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full";
+          statusBadge.innerText = `🔴 Mengoneksikan Ulang...`;
+        }
+      }
+    }
+
+    function processData() {
+      if (!rawData) return;
+
+      const now = new Date();
+      const istiwaNow = getIstiwaTime(now);
+
+      const hariList = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+      const hariIniKapital = hariList[now.getDay()];
+      
+      const menitSekarangIstiwa = (istiwaNow.getHours() * 60) + istiwaNow.getMinutes();
+
+      // Normalisasi Data
+      const dataGuruList = (rawData.data_guru || []).map(parseGuruRow);
+      const jadwalPelajaranList = (rawData.jadwal_pelajaran || []).map(parseJadwalRow);
+      const kehadiranList = (rawData.kehadiran || []).map(k => {
+        const vals = Object.values(k);
+        return {
+          kode_guru: String(k._c0 || vals[0] || '').trim(),
+          status: String(k._c1 || vals[1] || 'Hadir').trim(),
+          guru_pengganti: String(k._c2 || vals[2] || '-').trim()
+        };
+      });
+      const jadwalPiketList = (rawData.jadwal_piket || []).map(parsePiketRow);
+
+      const guruMap = {};
+      dataGuruList.forEach(g => { if (g.id_guru) guruMap[g.id_guru] = g; });
+
+      const kehadiranMap = {};
+      kehadiranList.forEach(k => { if (k.kode_guru) kehadiranMap[k.kode_guru] = k; });
+
+      // Filter Jadwal KBM Jam Istiwa Aktif
+      activeJadwalList = jadwalPelajaranList.filter(j => {
+        const hariJadwal = (j.hari || '').toString().trim().toUpperCase();
+        if (hariJadwal !== hariIniKapital) return false;
+
+        const start = timeToMinutes(j.jam_mulai);
+        const end = timeToMinutes(j.jam_selesai);
+
+        if (start === -1 || end === -1) return false;
+
+        return menitSekarangIstiwa >= start && menitSekarangIstiwa < end;
+      }).map(j => ({
+        ...j,
+        guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '' },
+        kehadiran: kehadiranMap[j.id_guru] || { status: 'Hadir' }
+      }));
+
+      // Render UI
+      renderTeleprompter();
+
+      if (lastRenderedCount !== activeJadwalList.length) {
+        renderCoverflowDOM();
+        lastRenderedCount = activeJadwalList.length;
+      } else {
+        updateCoverflowPositions();
+      }
+
+      renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList);
+    }
+
+    // ================= RENDER iOS COVER FLOW 3D =================
+    function renderCoverflowDOM() {
+      const stage = document.getElementById('coverflow-stage');
+      const counter = document.getElementById('counter-rolling');
+
+      if (activeJadwalList.length === 0) {
+        counter.innerText = '0 / 0';
+        stage.innerHTML = `
+          <div class="text-center py-12">
+            <div class="text-6xl mb-4">☕</div>
+            <h3 class="text-xl font-bold text-slate-700">Tidak Ada KBM Berlangsung</h3>
+            <p class="text-slate-500 text-sm mt-1">Saat ini tidak ada kelas aktif pada jam Istiwa ini.</p>
+          </div>
+        `;
+        return;
+      }
+
+      stage.innerHTML = activeJadwalList.map((item, idx) => {
+        const fotoUrl = getDirectDriveImg(item.guru.foto);
+
+        let statusBadge = `<span class="bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md shadow-emerald-500/20">● HADIR</span>`;
+        const statusText = (item.kehadiran.status || '').toString().toLowerCase();
+        if (statusText === 'izin' || statusText === 'sakit') {
+          statusBadge = `<span class="bg-rose-500 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md shadow-rose-500/20">● ${item.kehadiran.status.toUpperCase()}</span>`;
+        }
+
+        return `
+          <div class="coverflow-card hidden-right" id="cover-card-${idx}">
+            <div class="flex flex-col items-center text-center">
+              
+              <!-- Foto Guru -->
+              <div class="relative mb-3">
+                <div class="w-36 h-36 md:w-44 md:h-44 rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-slate-100">
+                  <img src="${fotoUrl}" alt="${item.guru.nama_guru}" class="w-full h-full object-cover" onError="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+                </div>
+                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                  ${statusBadge}
+                </div>
+              </div>
+
+              <!-- Informasi Guru -->
+              <div class="inline-block bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-1 rounded-lg mb-2 shadow-sm">
+                ⏱️ ${item.jam_mulai} - ${item.jam_selesai} (Istiwa)
+              </div>
+
+              <h2 class="text-xl md:text-2xl font-black text-slate-900 leading-snug mb-1 line-clamp-1">
+                ${item.guru.nama_guru || item.id_guru}
+              </h2>
+              <p class="text-blue-600 font-bold text-base mb-4 line-clamp-1">${item.mapel || '-'}</p>
+
+              <!-- Grid Kelas & Ruang -->
+              <div class="grid grid-cols-2 gap-3 w-full">
+                <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60 shadow-inner">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 block">Kelas</span>
+                  <span class="text-lg font-black text-indigo-600">${item.kelas || '-'}</span>
+                </div>
+                <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60 shadow-inner">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 block">Ruangan</span>
+                  <span class="text-lg font-black text-emerald-600">${item.ruang || '-'}</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      updateCoverflowPositions();
+    }
+
+    function updateCoverflowPositions() {
+      const total = activeJadwalList.length;
+      if (total === 0) return;
+
+      document.getElementById('counter-rolling').innerText = `${currentJadwalIndex + 1} / ${total}`;
+
+      for (let i = 0; i < total; i++) {
+        const card = document.getElementById(`cover-card-${i}`);
+        if (!card) continue;
+
+        let diff = (i - currentJadwalIndex + total) % total;
+        if (diff > total / 2) diff -= total;
+
+        if (diff === 0) {
+          card.className = "coverflow-card active";
+        } else if (diff === -1 || (diff === total - 1 && total > 2)) {
+          card.className = "coverflow-card prev";
+        } else if (diff === 1 || (diff === -(total - 1) && total > 2)) {
+          card.className = "coverflow-card next";
+        } else if (diff < 0) {
+          card.className = "coverflow-card hidden-left";
+        } else {
+          card.className = "coverflow-card hidden-right";
+        }
+      }
+    }
+
+    if (!coverflowTimer) {
+      coverflowTimer = setInterval(() => {
+        if (activeJadwalList.length > 0) {
+          currentJadwalIndex = (currentJadwalIndex + 1) % activeJadwalList.length;
+          updateCoverflowPositions();
+        }
+      }, 4000);
+    }
+
+    // ================= RENDER TELEPROMPTER =================
+    function renderTeleprompter() {
+      const tbody = document.getElementById('tabel-teleprompter-body');
+
+      if (activeJadwalList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-12 text-center text-slate-400">Tidak ada KBM aktif jam ini.</td></tr>`;
+        return;
+      }
+
+      const listToRender = [...activeJadwalList, ...activeJadwalList];
+
+      tbody.innerHTML = listToRender.map(j => `
+        <tr class="hover:bg-white/80 transition">
+          <td class="w-1/6 py-3 pl-2 font-black text-indigo-600">${j.kelas || '-'}</td>
+          <td class="w-2/6 py-3 font-semibold text-slate-800">${j.mapel || '-'}</td>
+          <td class="w-2/6 py-3 text-slate-600 font-medium">${j.guru.nama_guru || j.id_guru}</td>
+          <td class="w-1/6 py-3 pr-2 text-right font-bold text-emerald-600">${j.ruang || '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    // ================= RENDER GURU PIKET =================
+    function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
+      const piketTicker = document.getElementById('piket-ticker');
+
+      let piketAktif = jadwalPiketList.filter(p => {
+        const hariPiket = (p.hari || '').toString().trim().toUpperCase();
+        if (hariPiket !== hariIniKapital) return false;
+
+        const start = timeToMinutes(p.jam_mulai);
+        const end = timeToMinutes(p.jam_selesai);
+        if (start === -1 || end === -1) return false;
+
+        return menitSekarangIstiwa >= start && menitSekarangIstiwa < end;
+      });
+
+      if (piketAktif.length === 0) {
+        piketAktif = jadwalPiketList.filter(p => {
+          return (p.hari || '').toString().trim().toUpperCase() === hariIniKapital;
+        });
+      }
+
+      if (piketAktif.length === 0) {
+        piketTicker.className = "flex items-center font-semibold text-slate-500 text-sm";
+        piketTicker.innerHTML = `<span>Belum ada data guru piket terdaftar untuk hari ${hariIniKapital}.</span>`;
+        return;
+      }
+
+      piketTicker.className = "animate-marquee flex items-center gap-8 font-semibold text-slate-700 text-sm";
+      piketTicker.innerHTML = piketAktif.map(p => {
+        const guru = guruMap[p.id_guru] || { nama_guru: p.id_guru };
+        return `
+          <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-amber-200 shadow-sm flex-shrink-0">
+            <span class="text-amber-600 font-bold">👤 ${guru.nama_guru || p.id_guru}</span>
+            <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Area: ${p.area_piket || 'Utama'}</span>
+            <span class="text-xs text-slate-500 font-mono">(${p.jam_mulai}-${p.jam_selesai})</span>
+          </div>
+        `;
+      }).join(' &nbsp;•&nbsp; ');
+    }
+
+    setInterval(fetchData, 30000);
+    setInterval(processData, 10000);
+
+    fetchData();
+  </script>
+</body>
+</html>
