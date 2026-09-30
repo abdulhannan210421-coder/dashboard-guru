@@ -347,28 +347,66 @@
       fetchData();
     });
 
-    // 3. SCREEN WAKE LOCK API (CEGAH TV SLEEP / SCREEN SAVER)
-    let wakeLock = null;
-    async function requestWakeLock() {
+    // 3. SMART TV NO-SLEEP ENGINE (DUMMY VIDEO STREAM UNTUK CEGAH SCREEN SAVER)
+    function enableSmartTVNoSleep() {
+      if (document.getElementById('smart-tv-nosleep-video')) return; // Mencegah duplikasi
+
       try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await navigator.wakeLock.request('screen');
-        }
+        const canvas = document.createElement('canvas');
+        canvas.width = 16;
+        canvas.height = 16;
+        const ctx = canvas.getContext('2d');
+
+        let colorToggle = false;
+        setInterval(() => {
+          ctx.fillStyle = colorToggle ? '#000000' : '#022c22';
+          ctx.fillRect(0, 0, 16, 16);
+          colorToggle = !colorToggle;
+        }, 1000);
+
+        const stream = canvas.captureStream(1); // 1 FPS
+
+        const dummyVideo = document.createElement('video');
+        dummyVideo.id = 'smart-tv-nosleep-video';
+        dummyVideo.srcObject = stream;
+        dummyVideo.muted = true;
+        dummyVideo.playsInline = true;
+        dummyVideo.autoplay = true;
+        dummyVideo.style.position = 'fixed';
+        dummyVideo.style.top = '-100px';
+        dummyVideo.style.left = '-100px';
+        dummyVideo.style.width = '1px';
+        dummyVideo.style.height = '1px';
+        dummyVideo.style.opacity = '0.01';
+        dummyVideo.style.pointerEvents = 'none';
+
+        document.body.appendChild(dummyVideo);
+
+        dummyVideo.play().then(() => {
+          console.log("🟢 Smart TV No-Sleep Video Engine Aktif. Screen Saver berhasil dicegah.");
+        }).catch(err => {
+          console.warn("Gagal memutar dummy video secara otomatis, akan dipicu saat interaksi:", err);
+        });
       } catch (err) {
-        console.warn('Wake Lock tidak didukung browser TV ini:', err);
+        console.warn("Browser TV tidak mendukung Canvas Stream:", err);
       }
     }
 
-    document.addEventListener('visibilitychange', () => {
-      if (wakeLock !== null && document.visibilityState === 'visible') {
-        requestWakeLock();
-      }
-    });
-    requestWakeLock();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', enableSmartTVNoSleep);
+    } else {
+      enableSmartTVNoSleep();
+    }
 
     // INTERAKSI REMOTE/TOUCH UNTUK AUDIO UNLOCK & AUTO FULLSCREEN
     let audioUnlocked = false;
     function handleTVInteraction() {
+      // Picu re-play dummy video jika sebelumnya diblokir oleh autoplay policy TV
+      const dummyVideo = document.getElementById('smart-tv-nosleep-video');
+      if (dummyVideo && dummyVideo.paused) {
+        dummyVideo.play().catch(() => {});
+      }
+
       if (!audioUnlocked) {
         const audio = document.getElementById('audio-adzan');
         if (audio) {
@@ -1145,7 +1183,7 @@
               </div>
 
               <div class="inline-block bg-emerald-100 text-emerald-900 font-extrabold text-xs px-3.5 py-1 rounded-lg mb-2 shadow-sm border border-emerald-300">
-                ⏱️ ${item.jam_mulai} - ${item.jam_selesai} (Istiwa)
+                ⏱️️ ${item.jam_mulai} - ${item.jam_selesai} (Istiwa)
               </div>
 
               ${progressBarHtml}
