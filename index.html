@@ -7,24 +7,24 @@
 
   <!-- Tailwind CSS & Font -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
-    /* Background Cerah & Segar */
+    /* Background Cerah Fresh Nuansa Hijau Soft */
     .bg-vibrant {
-      background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 40%, #e0e7ff 100%);
+      background: linear-gradient(135deg, #e6f4ea 0%, #f0fdf4 40%, #dcfce7 100%);
     }
 
     /* Kartu Kaca Cerah (Light Glassmorphism) */
     .glass-card {
-      background: rgba(255, 255, 255, 0.90);
+      background: rgba(255, 255, 255, 0.93);
       backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 20px 40px -15px rgba(0, 100, 225, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 20px 40px -15px rgba(6, 95, 70, 0.12);
     }
 
     /* ================= iOS COVER FLOW 3D ANIMATION ================= */
@@ -40,26 +40,26 @@
 
     .coverflow-card {
       position: absolute;
-      width: 82%;
-      max-width: 480px;
+      width: 86%;
+      max-width: 490px;
       transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), 
                   opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), 
                   filter 0.8s cubic-bezier(0.25, 1, 0.5, 1);
       transform-style: preserve-3d;
       border-radius: 1.75rem;
-      padding: 1.75rem;
-      background: rgba(255, 255, 255, 0.96);
+      padding: 1.5rem 1.75rem;
+      background: rgba(255, 255, 255, 0.97);
       border: 2px solid rgba(255, 255, 255, 0.9);
       box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.12);
       will-change: transform, opacity, filter;
     }
 
     .coverflow-card.active {
-      transform: translateX(0) scale(1.06) translateZ(0);
+      transform: translateX(0) scale(1.05) translateZ(0);
       z-index: 30;
       opacity: 1;
       filter: blur(0px);
-      box-shadow: 0 30px 60px -12px rgba(37, 99, 235, 0.28), 0 0 0 2px #3b82f6;
+      box-shadow: 0 30px 60px -12px rgba(6, 95, 70, 0.28), 0 0 0 2.5px #059669;
     }
 
     .coverflow-card.prev {
@@ -102,7 +102,7 @@
     }
 
     .teleprompter-content {
-      animation: teleprompterScroll 32s linear infinite;
+      animation: teleprompterScroll 36s linear infinite;
     }
 
     .teleprompter-content:hover {
@@ -134,7 +134,7 @@
   </audio>
 
   <!-- Modal Layar Penuh Adzan (Hanya muncul saat waktu sholat) -->
-  <div id="modal-adzan" class="fixed inset-0 bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-900 text-white z-50 hidden flex-col items-center justify-center p-8 text-center">
+  <div id="modal-adzan" class="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-950 to-slate-950 text-white z-50 hidden flex-col items-center justify-center p-8 text-center">
     <div class="bg-emerald-500/20 p-6 rounded-full mb-6 border border-emerald-400/30 animate-pulse">
       <span class="text-6xl">🕌</span>
     </div>
@@ -148,64 +148,65 @@
     </div>
   </div>
 
-  <!-- ================= HEADER CERAH ================= -->
-  <header class="glass-card rounded-2xl p-3.5 px-6 flex justify-between items-center flex-shrink-0 mb-4">
+  <!-- ================= HEADER DENGAN LOGO PONDOK & AKSEN HIJAU GELAP ================= -->
+  <header class="glass-card rounded-2xl p-3 px-6 flex justify-between items-center flex-shrink-0 mb-4 border-l-8 border-emerald-800">
     <div class="flex items-center gap-4">
-      <div class="bg-blue-600 text-white p-3 rounded-xl shadow-lg shadow-blue-500/30">
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+      <!-- LOGO PONDOK PASANTREN -->
+      <div class="bg-white/80 p-1 rounded-xl border border-emerald-200/80 shadow-sm flex items-center justify-center">
+        <img src="Logo_Pondok.png" alt="Logo Pondok" class="h-12 md:h-14 w-auto object-contain drop-shadow-sm" onError="this.style.display='none'">
       </div>
       <div>
-        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">INFORMASI JADWAL GURU</h1>
+        <h1 class="text-2xl font-black text-emerald-950 tracking-tight">INFORMASI JADWAL GURU</h1>
         <div class="flex items-center gap-3 mt-0.5">
-          <p id="info-tanggal" class="text-blue-600 font-semibold text-sm">Memuat tanggal Masehi & Hijriyah...</p>
+          <p id="info-tanggal" class="text-emerald-700 font-bold text-sm">Memuat tanggal Masehi & Hijriyah...</p>
           <span id="api-status-badge" class="bg-slate-200 text-slate-600 text-[10px] font-bold px-2.5 py-0.5 rounded-full">Menghubungkan API...</span>
         </div>
       </div>
     </div>
 
-    <!-- RIBBON 5 WAKTU SHOLAT FALAK CERAH -->
-    <div class="hidden lg:flex items-center gap-2 bg-emerald-50/80 p-1.5 rounded-2xl border border-emerald-200/80">
-      <div id="box-subuh" class="px-3 py-1.5 rounded-xl text-center border border-transparent transition">
-        <span class="text-[9px] font-bold text-emerald-800 uppercase block">SUBUH</span>
-        <span id="time-subuh" class="text-xs font-black text-slate-800">--:--</span>
+    <!-- RIBBON 5 WAKTU SHOLAT FALAK (IHTIYATH +3 MENIT) -->
+    <div class="hidden lg:flex items-center gap-2 bg-emerald-100/60 p-1.5 rounded-2xl border border-emerald-300/70">
+      <div id="box-subuh" class="px-3.5 py-1.5 rounded-xl text-center border border-transparent transition">
+        <span class="text-[9px] font-extrabold text-emerald-900 uppercase block tracking-wider">SUBUH</span>
+        <span id="time-subuh" class="text-sm font-black text-slate-800">--:--</span>
       </div>
-      <div id="box-dzuhur" class="px-3 py-1.5 rounded-xl text-center border border-transparent transition">
-        <span class="text-[9px] font-bold text-emerald-800 uppercase block">DZUHUR</span>
-        <span id="time-dzuhur" class="text-xs font-black text-slate-800">12:04</span>
+      <div id="box-dzuhur" class="px-3.5 py-1.5 rounded-xl text-center border border-transparent transition">
+        <span class="text-[9px] font-extrabold text-emerald-900 uppercase block tracking-wider">DZUHUR</span>
+        <span id="time-dzuhur" class="text-sm font-black text-slate-800">12:04</span>
       </div>
-      <div id="box-ashar" class="px-3 py-1.5 rounded-xl text-center border border-transparent transition">
-        <span class="text-[9px] font-bold text-emerald-800 uppercase block">ASHAR</span>
-        <span id="time-ashar" class="text-xs font-black text-slate-800">--:--</span>
+      <div id="box-ashar" class="px-3.5 py-1.5 rounded-xl text-center border border-transparent transition">
+        <span class="text-[9px] font-extrabold text-emerald-900 uppercase block tracking-wider">ASHAR</span>
+        <span id="time-ashar" class="text-sm font-black text-slate-800">--:--</span>
       </div>
-      <div id="box-maghrib" class="px-3 py-1.5 rounded-xl text-center border border-transparent transition">
-        <span class="text-[9px] font-bold text-emerald-800 uppercase block">MAGHRIB</span>
-        <span id="time-maghrib" class="text-xs font-black text-slate-800">--:--</span>
+      <div id="box-maghrib" class="px-3.5 py-1.5 rounded-xl text-center border border-transparent transition">
+        <span class="text-[9px] font-extrabold text-emerald-900 uppercase block tracking-wider">MAGHRIB</span>
+        <span id="time-maghrib" class="text-sm font-black text-slate-800">--:--</span>
       </div>
-      <div id="box-isya" class="px-3 py-1.5 rounded-xl text-center border border-transparent transition">
-        <span class="text-[9px] font-bold text-emerald-800 uppercase block">ISYA</span>
-        <span id="time-isya" class="text-xs font-black text-slate-800">--:--</span>
+      <div id="box-isya" class="px-3.5 py-1.5 rounded-xl text-center border border-transparent transition">
+        <span class="text-[9px] font-extrabold text-emerald-900 uppercase block tracking-wider">ISYA</span>
+        <span id="time-isya" class="text-sm font-black text-slate-800">--:--</span>
       </div>
     </div>
 
-    <!-- Jam Istiwa Digital -->
+    <!-- Jam Istiwa Digital (Gradasi Hijau Gelap) -->
     <div class="flex items-center gap-4">
-      <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-5 py-2 rounded-2xl shadow-lg shadow-teal-500/20 text-center">
+      <div class="bg-gradient-to-r from-emerald-800 via-teal-900 to-green-900 text-white px-5 py-2 rounded-2xl shadow-lg shadow-emerald-900/20 text-center border border-emerald-700/50">
         <div id="live-clock" class="text-3xl font-black tracking-wider">00:00:00</div>
-        <div class="text-[10px] uppercase font-bold tracking-widest text-emerald-100">☀️ JAM ISTIWA LOKAL</div>
+        <div class="text-[10px] uppercase font-extrabold tracking-widest text-emerald-200">☀️ JAM ISTIWA LOKAL</div>
       </div>
     </div>
   </header>
 
-  <!-- ================= KONTEN UTAMA (SPLIT SCREEN 60:40) ================= -->
+  <!-- ================= KONTEN UTAMA (SPLIT SCREEN 55:45) ================= -->
   <main class="grid grid-cols-12 gap-5 flex-1 min-h-0 mb-4 overflow-hidden">
 
-    <!-- SISI KIRI (60%): iOS COVER FLOW 3D CAROUSEL -->
-    <section class="col-span-7 flex flex-col h-full overflow-hidden">
+    <!-- SISI KIRI (55%): iOS COVER FLOW 3D CAROUSEL -->
+    <section class="col-span-6 flex flex-col h-full overflow-hidden">
       <div class="flex justify-between items-center mb-2 px-2 flex-shrink-0">
-        <span class="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span> Sorotan Guru Mengajar (iOS 3D Cover Flow)
+        <span class="text-xs font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping"></span> Sorotan Guru Mengajar (iOS 3D Cover Flow)
         </span>
-        <span id="counter-rolling" class="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full">0 / 0</span>
+        <span id="counter-rolling" class="text-xs font-extrabold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-300">0 / 0</span>
       </div>
 
       <div id="coverflow-viewport" class="glass-card rounded-3xl flex-1 relative overflow-hidden flex items-center justify-center p-4 border-2 border-white">
@@ -215,32 +216,28 @@
       </div>
     </section>
 
-    <!-- SISI KANAN (40%): TELEPROMPTER AUTO-SCROLL TABLE -->
-    <section class="col-span-5 flex flex-col h-full overflow-hidden">
+    <!-- SISI KANAN (45%): TELEPROMPTER BESAR & INFORMATIF -->
+    <section class="col-span-6 flex flex-col h-full overflow-hidden">
       <div class="mb-2 px-2 flex justify-between items-center flex-shrink-0">
-        <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">📜 Teleprompter Ringkasan KBM Jam Ini</span>
-        <span class="text-[10px] bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded-full">Auto-Scroll</span>
+        <span class="text-xs font-extrabold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+          <span>📜</span> RINGKASAN KBM AKTIF JAM INI
+        </span>
+        <span class="text-[10px] bg-emerald-800 text-white font-extrabold px-2.5 py-0.5 rounded-full tracking-wider uppercase shadow-sm">Auto-Scroll</span>
       </div>
 
       <div class="glass-card rounded-3xl p-4 flex-1 overflow-hidden border-2 border-white flex flex-col">
-        <table class="w-full text-left text-xs uppercase font-bold text-slate-400 border-b border-slate-200 pb-2 mb-2 flex-shrink-0">
-          <thead>
-            <tr>
-              <th class="w-1/6 pl-2">Kelas</th>
-              <th class="w-2/6">Mapel</th>
-              <th class="w-2/6">Guru</th>
-              <th class="w-1/6 text-right pr-2">Ruang</th>
-            </tr>
-          </thead>
-        </table>
+        <!-- Header Tabel Teleprompter -->
+        <div class="grid grid-cols-12 gap-2 text-xs font-black uppercase tracking-wider text-emerald-900 border-b-2 border-emerald-200 pb-2 mb-3 flex-shrink-0 px-2">
+          <div class="col-span-2">KELAS</div>
+          <div class="col-span-4">MATA PELAJARAN</div>
+          <div class="col-span-4">GURU PENGAJAR</div>
+          <div class="col-span-2 text-right">RUANG</div>
+        </div>
 
+        <!-- Track Teleprompter Auto Scroll -->
         <div class="teleprompter-wrapper flex-1">
-          <div id="teleprompter-track" class="teleprompter-content">
-            <table class="w-full text-left text-sm divide-y divide-slate-100">
-              <tbody id="tabel-teleprompter-body" class="font-medium text-slate-700">
-                <tr><td colspan="4" class="py-8 text-center text-slate-400">Memuat teleprompter...</td></tr>
-              </tbody>
-            </table>
+          <div id="teleprompter-track" class="teleprompter-content space-y-2.5 pr-1">
+            <div class="text-center py-16 text-slate-400 font-extrabold text-lg">Memuat teleprompter...</div>
           </div>
         </div>
       </div>
@@ -250,7 +247,7 @@
 
   <!-- ================= FOOTER / RUNNING TICKER GURU PIKET ================= -->
   <footer class="glass-card rounded-2xl p-2.5 px-4 flex items-center gap-4 overflow-hidden border-2 border-amber-300/80 bg-gradient-to-r from-amber-500/10 via-white/90 to-amber-500/10 flex-shrink-0">
-    <div class="bg-amber-500 text-white font-extrabold text-xs px-4 py-2 rounded-xl flex items-center gap-2 whitespace-nowrap shadow-md shadow-amber-500/20 flex-shrink-0">
+    <div class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-extrabold text-xs px-4 py-2 rounded-xl flex items-center gap-2 whitespace-nowrap shadow-md shadow-emerald-900/20 flex-shrink-0">
       <span>🛡️ GURU PIKET HARI INI</span>
     </div>
 
@@ -351,6 +348,14 @@
       let jam = (degCarry + jamCarry) % 24;
 
       return { jam, menit, detik };
+    }
+
+    // Helper Penambahan Waktu Ihtiyath
+    function addIhtiyathMinutes(jam, menit, minsToAdd = 3) {
+      let total = jam * 60 + menit + minsToAdd;
+      total = (total + 1440) % 1440;
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
     }
 
     function hitungWaktuSholatFalak(dateObj = new Date(), latDeg = 7, latMin = 39, latArah = "SELATAN") {
@@ -481,14 +486,13 @@
       if (fAsrMin === 60) { fAsrDeg += 1; fAsrMin = 0; }
       const asrBox = convertLattice4(fAsrDeg, fAsrMin);
 
-      const pad = n => String(n).padStart(2, '0');
-
+      // PENAMBAHAN WAKTU IHTIYATH +3 MENIT (KECUALI DZUHUR)
       return {
-        subuh:   `${pad(subhBox.jam)}:${pad(subhBox.menit)}`,
-        dzuhur:  "12:04", // Dzuhur Paten Istiwa
-        ashar:   `${pad((asrBox.jam + 12) % 24)}:${pad(asrBox.menit)}`,
-        maghrib: `${pad((maghribBox.jam + 12) % 24)}:${pad(maghribBox.menit)}`,
-        isya:    `${pad((isyaBox.jam + 12) % 24)}:${pad(isyaBox.menit)}`
+        subuh:   addIhtiyathMinutes(subhBox.jam, subhBox.menit, 3),
+        dzuhur:  "12:04", // Dzuhur Tetap 12:04
+        ashar:   addIhtiyathMinutes((asrBox.jam + 12) % 24, asrBox.menit, 3),
+        maghrib: addIhtiyathMinutes((maghribBox.jam + 12) % 24, maghribBox.menit, 3),
+        isya:    addIhtiyathMinutes((isyaBox.jam + 12) % 24, isyaBox.menit, 3)
       };
     }
 
@@ -548,13 +552,13 @@
         const box = document.getElementById(s.id);
         if (box) {
           if (s.id === nextSholat.id) {
-            box.className = "px-3 py-1.5 rounded-xl text-center border bg-emerald-600 text-white shadow-md shadow-emerald-500/30 font-bold scale-105 transition-all";
-            box.querySelector('span').className = "text-[9px] font-bold text-emerald-100 uppercase block";
-            box.querySelector('span:nth-child(2)').className = "text-xs font-black text-white";
+            box.className = "px-3.5 py-1.5 rounded-xl text-center border bg-emerald-800 text-white shadow-md shadow-emerald-900/30 font-bold scale-105 transition-all";
+            box.querySelector('span').className = "text-[9px] font-extrabold text-emerald-100 uppercase block tracking-wider";
+            box.querySelector('span:nth-child(2)').className = "text-sm font-black text-white";
           } else {
-            box.className = "px-3 py-1.5 rounded-xl text-center border border-transparent transition";
-            box.querySelector('span').className = "text-[9px] font-bold text-emerald-800 uppercase block";
-            box.querySelector('span:nth-child(2)').className = "text-xs font-black text-slate-800";
+            box.className = "px-3.5 py-1.5 rounded-xl text-center border border-transparent transition";
+            box.querySelector('span').className = "text-[9px] font-extrabold text-emerald-900 uppercase block tracking-wider";
+            box.querySelector('span:nth-child(2)').className = "text-sm font-black text-slate-800";
           }
         }
       });
@@ -753,7 +757,7 @@
         if (newData && (newData.data_guru || newData.jadwal_pelajaran)) {
           rawData = newData;
           localStorage.setItem('jadwal_signage_cache', JSON.stringify(newData));
-          statusBadge.className = "bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full";
+          statusBadge.className = "bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-300";
           statusBadge.innerText = `🟢 Terhubung (${(rawData.data_guru||[]).length} Guru, ${(rawData.jadwal_pelajaran||[]).length} Jadwal)`;
           processData();
           return;
@@ -822,6 +826,7 @@
       renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList);
     }
 
+    // ================= CAROUSEL GURU (HIJAU GRADASI GELAP) =================
     function renderCoverflowDOM() {
       const stage = document.getElementById('coverflow-stage');
       const counter = document.getElementById('counter-rolling');
@@ -840,17 +845,17 @@
 
       stage.innerHTML = activeJadwalList.map((item, idx) => {
         const fotoUrl = getDirectDriveImg(item.guru.foto);
-        let statusBadge = `<span class="bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md shadow-emerald-500/20">● HADIR</span>`;
+        let statusBadge = `<span class="bg-emerald-600 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md shadow-emerald-700/20">● HADIR</span>`;
         const statusText = (item.kehadiran.status || '').toString().toLowerCase();
         if (statusText === 'izin' || statusText === 'sakit') {
-          statusBadge = `<span class="bg-rose-500 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md shadow-rose-500/20">● ${item.kehadiran.status.toUpperCase()}</span>`;
+          statusBadge = `<span class="bg-rose-600 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md shadow-rose-600/20">● ${item.kehadiran.status.toUpperCase()}</span>`;
         }
 
         return `
           <div class="coverflow-card hidden-right" id="cover-card-${idx}">
             <div class="flex flex-col items-center text-center">
               <div class="relative mb-3">
-                <div class="w-36 h-36 md:w-44 md:h-44 rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-slate-100">
+                <div class="w-32 h-32 md:w-40 md:h-40 rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-slate-100">
                   <img src="${fotoUrl}" alt="${item.guru.nama_guru}" class="w-full h-full object-cover" onError="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
                 </div>
                 <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
@@ -858,23 +863,27 @@
                 </div>
               </div>
 
-              <div class="inline-block bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-1 rounded-lg mb-2 shadow-sm">
+              <div class="inline-block bg-emerald-100 text-emerald-900 font-extrabold text-xs px-3.5 py-1 rounded-lg mb-2 shadow-sm border border-emerald-300">
                 ⏱️ ${item.jam_mulai} - ${item.jam_selesai} (Istiwa)
               </div>
 
-              <h2 class="text-xl md:text-2xl font-black text-slate-900 leading-snug mb-1 line-clamp-1">
-                ${item.guru.nama_guru || item.id_guru}
-              </h2>
-              <p class="text-blue-600 font-bold text-base mb-4 line-clamp-1">${item.mapel || '-'}</p>
+              <!-- NAMA USTADZ LENGKAP UTUH -->
+              <div class="min-h-[3.5rem] flex items-center justify-center text-center mb-1">
+                <h2 class="text-lg md:text-xl font-black text-emerald-950 leading-tight">
+                  ${item.guru.nama_guru || item.id_guru}
+                </h2>
+              </div>
+
+              <p class="text-emerald-700 font-bold text-sm md:text-base mb-3 leading-tight">${item.mapel || '-'}</p>
 
               <div class="grid grid-cols-2 gap-3 w-full">
                 <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60 shadow-inner">
                   <span class="text-[10px] uppercase font-bold text-slate-400 block">Kelas</span>
-                  <span class="text-lg font-black text-indigo-600">${item.kelas || '-'}</span>
+                  <span class="text-lg font-black text-emerald-800">${item.kelas || '-'}</span>
                 </div>
                 <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60 shadow-inner">
                   <span class="text-[10px] uppercase font-bold text-slate-400 block">Ruangan</span>
-                  <span class="text-lg font-black text-emerald-600">${item.ruang || '-'}</span>
+                  <span class="text-lg font-black text-teal-800">${item.ruang || '-'}</span>
                 </div>
               </div>
             </div>
@@ -913,21 +922,65 @@
       }, 4000);
     }
 
+    // ================= TELEPROMPTER BESAR, RAPI & INFORMATIF =================
     function renderTeleprompter() {
-      const tbody = document.getElementById('tabel-teleprompter-body');
+      const track = document.getElementById('teleprompter-track');
       if (activeJadwalList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="py-12 text-center text-slate-400">Tidak ada KBM aktif jam ini.</td></tr>`;
+        track.innerHTML = `<div class="text-center py-16 text-slate-400 font-extrabold text-lg">Tidak Ada KBM Aktif Jam Ini</div>`;
         return;
       }
+
+      // Duplikasi list agar perputaran auto-scroll berlangsung tanpa putus
       const listToRender = [...activeJadwalList, ...activeJadwalList];
-      tbody.innerHTML = listToRender.map(j => `
-        <tr class="hover:bg-white/80 transition">
-          <td class="w-1/6 py-3 pl-2 font-black text-indigo-600">${j.kelas || '-'}</td>
-          <td class="w-2/6 py-3 font-semibold text-slate-800">${j.mapel || '-'}</td>
-          <td class="w-2/6 py-3 text-slate-600 font-medium">${j.guru.nama_guru || j.id_guru}</td>
-          <td class="w-1/6 py-3 pr-2 text-right font-bold text-emerald-600">${j.ruang || '-'}</td>
-        </tr>
-      `).join('');
+
+      track.innerHTML = listToRender.map((j, i) => {
+        const st = (j.kehadiran.status || 'Hadir').toString().toLowerCase();
+        let statusBadge = `<span class="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-emerald-300">Hadir</span>`;
+        if (st === 'izin' || st === 'sakit') {
+          statusBadge = `<span class="bg-rose-100 text-rose-700 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-rose-300">${j.kehadiran.status.toUpperCase()}</span>`;
+        }
+
+        const bgClass = (i % 2 === 0) ? 'bg-white/90' : 'bg-emerald-50/50';
+
+        return `
+          <div class="grid grid-cols-12 gap-2 items-center p-3.5 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm hover:border-emerald-400 transition">
+            
+            <!-- KELAS BADGE (GRADASI HIJAU GELAP) -->
+            <div class="col-span-2">
+              <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-base md:text-lg px-3 py-1.5 rounded-xl shadow-md shadow-emerald-900/20 inline-block text-center w-full">
+                ${j.kelas || '-'}
+              </span>
+            </div>
+
+            <!-- MATA PELAJARAN -->
+            <div class="col-span-4 pl-1">
+              <h3 class="font-extrabold text-slate-900 text-base md:text-lg leading-snug">
+                ${j.mapel || '-'}
+              </h3>
+              <span class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block">Mata Pelajaran</span>
+            </div>
+
+            <!-- GURU PENGAJAR & STATUS -->
+            <div class="col-span-4">
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="font-bold text-slate-800 text-sm md:text-base leading-tight">${j.guru.nama_guru || j.id_guru}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                ${statusBadge}
+                <span class="text-[11px] text-slate-400 font-mono font-bold">(${j.jam_mulai}-${j.jam_selesai})</span>
+              </div>
+            </div>
+
+            <!-- RUANG BADGE -->
+            <div class="col-span-2 text-right">
+              <span class="bg-emerald-100 text-emerald-900 font-black text-sm md:text-base px-2.5 py-1 rounded-xl border border-emerald-300 inline-block">
+                ${j.ruang || '-'}
+              </span>
+            </div>
+
+          </div>
+        `;
+      }).join('');
     }
 
     function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
@@ -953,9 +1006,9 @@
       piketTicker.innerHTML = piketAktif.map(p => {
         const guru = guruMap[p.id_guru] || { nama_guru: p.id_guru };
         return `
-          <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-amber-200 shadow-sm flex-shrink-0">
-            <span class="text-amber-600 font-bold">👤 ${guru.nama_guru || p.id_guru}</span>
-            <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Area: ${p.area_piket || 'Utama'}</span>
+          <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
+            <span class="text-emerald-800 font-bold">👤 ${guru.nama_guru || p.id_guru}</span>
+            <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Area: ${p.area_piket || 'Utama'}</span>
             <span class="text-xs text-slate-500 font-mono">(${p.jam_mulai}-${p.jam_selesai})</span>
           </div>
         `;
