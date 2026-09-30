@@ -126,12 +126,17 @@
     }
   </style>
 </head>
-<body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
+<body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative" onclick="unlockAudioOnInteraction()">
 
   <!-- Audio Element Adzan Lokal -->
   <audio id="audio-adzan" preload="auto">
     <source src="adzan.mp3" type="audio/mpeg">
   </audio>
+
+  <!-- Banner Pengaktif Suara Adzan -->
+  <div id="banner-audio-notice" class="fixed top-2 left-1/2 -translate-x-1/2 z-40 bg-amber-500 text-white font-extrabold text-xs px-5 py-2 rounded-full shadow-lg border-2 border-white animate-bounce flex items-center gap-2 cursor-pointer">
+    <span>🔊 Klik / Sentuh Layar 1x untuk Mengaktifkan Suara Adzan</span>
+  </div>
 
   <!-- Modal Layar Penuh Adzan (Hanya muncul saat waktu sholat) -->
   <div id="modal-adzan" class="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-950 to-slate-950 text-white z-50 hidden flex-col items-center justify-center p-8 text-center">
@@ -508,22 +513,27 @@
     let coverflowTimer = null;
     let lastRenderedCount = -1;
     let adzanActive = false;
-    let audioCtx = null;
+    let audioUnlocked = false;
+    let lastAdzanTriggeredTime = "";
 
-    function initAudioSilent() {
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-          audioCtx = new AudioContext();
-          if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-      } catch (e) {}
+    function unlockAudioOnInteraction() {
+      if (audioUnlocked) return;
+      const audio = document.getElementById('audio-adzan');
+      if (audio) {
+        audio.play().then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          audioUnlocked = true;
+          const banner = document.getElementById('banner-audio-notice');
+          if (banner) banner.style.display = 'none';
+        }).catch(() => {});
+      }
     }
-    window.addEventListener('click', initAudioSilent, { once: true });
-    window.addEventListener('keydown', initAudioSilent, { once: true });
 
     function updateHeaderPrayerRibbon() {
-      const p = hitungWaktuSholatFalak(new Date());
+      const now = new Date();
+      const istiwaNow = getIstiwaTime(now); // Menggunakan Jam Istiwa
+      const p = hitungWaktuSholatFalak(now);
       if (!p) return;
 
       document.getElementById('time-subuh').innerText = p.subuh;
@@ -532,9 +542,8 @@
       document.getElementById('time-maghrib').innerText = p.maghrib;
       document.getElementById('time-isya').innerText = p.isya;
 
-      const now = new Date();
       const formatHM = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-      const nowHM = formatHM(now);
+      const nowIstiwaHM = formatHM(istiwaNow); // Jam Istiwa Format HH:MM
 
       const listSholat = [
         { id: 'box-subuh', name: 'SUBUH', time: p.subuh },
@@ -545,7 +554,7 @@
       ];
 
       // Highlight Waktu Sholat Berikutnya
-      let nextSholat = listSholat.find(s => s.time > nowHM);
+      let nextSholat = listSholat.find(s => s.time > nowIstiwaHM);
       if (!nextSholat) nextSholat = listSholat[0];
 
       listSholat.forEach(s => {
@@ -563,10 +572,11 @@
         }
       });
 
-      // Pemicu Adzan Otomatis
-      if (now.getSeconds() === 0 && !adzanActive) {
-        const matchingSholat = listSholat.find(s => s.time === nowHM);
+      // PEMICU ADZAN OTOMATIS BERDASARKAN JAM ISTIWA
+      if (!adzanActive && lastAdzanTriggeredTime !== nowIstiwaHM) {
+        const matchingSholat = listSholat.find(s => s.time === nowIstiwaHM);
         if (matchingSholat) {
+          lastAdzanTriggeredTime = nowIstiwaHM;
           triggerAdzanScreen(matchingSholat.name);
         }
       }
@@ -582,7 +592,7 @@
       const audio = document.getElementById('audio-adzan');
       if (audio) {
         audio.currentTime = 0;
-        audio.play().catch(e => console.warn("Audio notice:", e));
+        audio.play().catch(e => console.warn("Audio Play Error:", e));
       }
 
       let duration = 180;
