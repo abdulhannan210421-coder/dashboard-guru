@@ -645,7 +645,7 @@
           nama_guru: String(item._c1).trim(),
           domisili: String(item._c2).trim(),
           alamat: String(item._c3).trim(),
-          status_guru: String(item._c4).trim(),
+          status_guru: String(item._c4 || '').trim(),
           foto: String(item._c5 || '').trim()
         };
       }
@@ -695,6 +695,28 @@
       const match = url.toString().match(/\/d\/([a-zA-Z0-9_-]+)/) || url.toString().match(/id=([a-zA-Z0-9_-]+)/);
       if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
       return url;
+    }
+
+    // HELPER BADGE STATUS GURU (WALI KELAS vs FAN)
+    function getStatusGuruBadge(statusGuru, isTeleprompter = false) {
+      const st = (statusGuru || '').toString().trim().toUpperCase();
+      if (isTeleprompter) {
+        if (st.includes('WALI')) {
+          return `<span class="bg-amber-100 text-amber-900 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-amber-300">★ WALI KELAS</span>`;
+        } else if (st.includes('FAN')) {
+          return `<span class="bg-teal-100 text-teal-900 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-teal-300">● FAN</span>`;
+        } else {
+          return `<span class="bg-emerald-100 text-emerald-900 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-emerald-300">${st || 'GURU'}</span>`;
+        }
+      } else {
+        if (st.includes('WALI')) {
+          return `<span class="bg-amber-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-amber-300">★ WALI KELAS</span>`;
+        } else if (st.includes('FAN')) {
+          return `<span class="bg-teal-700 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-teal-400">● FAN</span>`;
+        } else {
+          return `<span class="bg-emerald-800 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-emerald-500">${st || 'GURU'}</span>`;
+        }
+      }
     }
 
     function getIstiwaTime(now) {
@@ -810,7 +832,7 @@
         return menitSekarangIstiwa >= start && menitSekarangIstiwa < end;
       }).map(j => ({
         ...j,
-        guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '' },
+        guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '', status_guru: '' },
         kehadiran: kehadiranMap[j.id_guru] || { status: 'Hadir' }
       }));
 
@@ -826,7 +848,7 @@
       renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList);
     }
 
-    // ================= CAROUSEL GURU (HIJAU GRADASI GELAP) =================
+    // ================= CAROUSEL GURU (DENGAN BADGE STATUS_GURU) =================
     function renderCoverflowDOM() {
       const stage = document.getElementById('coverflow-stage');
       const counter = document.getElementById('counter-rolling');
@@ -845,11 +867,7 @@
 
       stage.innerHTML = activeJadwalList.map((item, idx) => {
         const fotoUrl = getDirectDriveImg(item.guru.foto);
-        let statusBadge = `<span class="bg-emerald-600 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md shadow-emerald-700/20">● HADIR</span>`;
-        const statusText = (item.kehadiran.status || '').toString().toLowerCase();
-        if (statusText === 'izin' || statusText === 'sakit') {
-          statusBadge = `<span class="bg-rose-600 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md shadow-rose-600/20">● ${item.kehadiran.status.toUpperCase()}</span>`;
-        }
+        const statusBadge = getStatusGuruBadge(item.guru.status_guru, false);
 
         return `
           <div class="coverflow-card hidden-right" id="cover-card-${idx}">
@@ -934,12 +952,7 @@
       const listToRender = [...activeJadwalList, ...activeJadwalList];
 
       track.innerHTML = listToRender.map((j, i) => {
-        const st = (j.kehadiran.status || 'Hadir').toString().toLowerCase();
-        let statusBadge = `<span class="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-emerald-300">Hadir</span>`;
-        if (st === 'izin' || st === 'sakit') {
-          statusBadge = `<span class="bg-rose-100 text-rose-700 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-rose-300">${j.kehadiran.status.toUpperCase()}</span>`;
-        }
-
+        const statusBadge = getStatusGuruBadge(j.guru.status_guru, true);
         const bgClass = (i % 2 === 0) ? 'bg-white/90' : 'bg-emerald-50/50';
 
         return `
@@ -960,7 +973,7 @@
               <span class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block">Mata Pelajaran</span>
             </div>
 
-            <!-- GURU PENGAJAR & STATUS -->
+            <!-- GURU PENGAJAR & STATUS GURU -->
             <div class="col-span-4">
               <div class="flex items-center gap-2 mb-0.5">
                 <span class="font-bold text-slate-800 text-sm md:text-base leading-tight">${j.guru.nama_guru || j.id_guru}</span>
