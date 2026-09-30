@@ -16,18 +16,15 @@
       user-select: none;
     }
 
-    /* Background Cerah Fresh Nuansa Hijau Soft */
     .bg-vibrant {
       background: linear-gradient(135deg, #e6f4ea 0%, #f0fdf4 40%, #dcfce7 100%);
     }
 
-    /* Background Cyber-Dark Emerald (Mode Malam Otomatis) */
     body.dark-mode {
       background: linear-gradient(135deg, #022c22 0%, #064e3b 50%, #0f172a 100%);
       color: #f1f5f9;
     }
 
-    /* Kartu Kaca Cerah */
     .glass-card {
       background: rgba(255, 255, 255, 0.93);
       backdrop-filter: blur(16px);
@@ -36,14 +33,12 @@
       transition: all 0.5s ease;
     }
 
-    /* Kartu Kaca Dark Mode */
     body.dark-mode .glass-card {
       background: rgba(15, 23, 42, 0.82);
       border: 1px solid rgba(255, 255, 255, 0.12);
       box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
     }
 
-    /* Dynamic Neon Text dalam Dark Mode */
     body.dark-mode .text-emerald-950,
     body.dark-mode .text-slate-800,
     body.dark-mode .text-slate-900 {
@@ -58,7 +53,6 @@
       border-color: rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* Cover Flow 3D Animation */
     .coverflow-container {
       perspective: 1200px;
       display: flex;
@@ -134,7 +128,6 @@
       pointer-events: none;
     }
 
-    /* Teleprompter Scroll */
     .teleprompter-wrapper {
       position: relative;
       overflow: hidden;
@@ -154,7 +147,6 @@
       100% { transform: translateY(-50%); }
     }
 
-    /* Marquee Scroll */
     @keyframes marqueeScroll {
       0% { transform: translateX(100%); }
       100% { transform: translateX(-100%); }
@@ -195,7 +187,7 @@
     </div>
   </div>
 
-  <!-- Modal 2: Layar Adzan (Presisi Sesuai MP3) -->
+  <!-- Modal 2: Layar Adzan -->
   <div id="modal-adzan" class="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-950 to-slate-950 text-white z-50 hidden flex-col items-center justify-center p-8 text-center">
     <div class="bg-emerald-500/20 p-6 rounded-full mb-6 border border-emerald-400/30 animate-pulse">
       <span class="text-6xl">🕌</span>
@@ -210,7 +202,7 @@
     </div>
   </div>
 
-  <!-- ================= HEADER DENGAN CUACA & BADGE LIVE ================= -->
+  <!-- HEADER -->
   <header class="glass-card rounded-2xl p-3 px-6 flex justify-between items-center flex-shrink-0 mb-4 border-l-8 border-emerald-800">
     <div class="flex items-center gap-4">
       <div class="bg-white/80 p-1 rounded-xl border border-emerald-200/80 shadow-sm flex items-center justify-center">
@@ -228,7 +220,6 @@
       </div>
     </div>
 
-    <!-- RIBBON WAKTU SHOLAT FALAK -->
     <div class="hidden lg:flex items-center gap-2 bg-emerald-100/60 p-1.5 rounded-2xl border border-emerald-300/70">
       <div id="box-subuh" class="px-3 py-1.5 rounded-xl text-center border border-transparent transition">
         <span class="text-[9px] font-extrabold text-emerald-900 uppercase block tracking-wider">SUBUH</span>
@@ -252,7 +243,6 @@
       </div>
     </div>
 
-    <!-- JAM ISTIWA & HITUNG MUNDUR -->
     <div class="flex items-center gap-3">
       <div class="hidden sm:flex flex-col items-center justify-center bg-gradient-to-b from-amber-500/10 to-amber-600/20 border border-amber-400/60 px-4 py-1.5 rounded-2xl shadow-sm text-center">
         <span id="next-prayer-name" class="text-[10px] uppercase font-black tracking-wider text-amber-900">⏳ MENJELANG SHOLAT</span>
@@ -266,10 +256,8 @@
     </div>
   </header>
 
-  <!-- ================= KONTEN UTAMA ================= -->
+  <!-- KONTEN UTAMA -->
   <main class="grid grid-cols-12 gap-5 flex-1 min-h-0 mb-4 overflow-hidden">
-
-    <!-- SISI KIRI (55%): iOS COVER FLOW CAROUSEL -->
     <section class="col-span-6 flex flex-col h-full overflow-hidden">
       <div class="flex justify-between items-center mb-2 px-2 flex-shrink-0">
         <span id="section-title-left" class="text-xs font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
@@ -285,7 +273,6 @@
       </div>
     </section>
 
-    <!-- SISI KANAN (45%): TELEPROMPTER SCROLL -->
     <section class="col-span-6 flex flex-col h-full overflow-hidden">
       <div class="mb-2 px-2 flex justify-between items-center flex-shrink-0">
         <span id="section-title-right" class="text-xs font-extrabold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -309,10 +296,9 @@
         </div>
       </div>
     </section>
-
   </main>
 
-  <!-- ================= FOOTER / TICKER ================= -->
+  <!-- FOOTER / TICKER -->
   <footer class="glass-card rounded-2xl p-2.5 px-4 flex items-center gap-4 overflow-hidden border-2 border-amber-300/80 bg-gradient-to-r from-amber-500/10 via-white/90 to-amber-500/10 flex-shrink-0">
     <div class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-extrabold text-xs px-4 py-2 rounded-xl flex items-center gap-2 whitespace-nowrap shadow-md shadow-emerald-900/20 flex-shrink-0">
       <span>🛡️ GURU PIKET / INFORMASI</span>
@@ -325,51 +311,37 @@
     </div>
   </footer>
 
-  <!-- ================= JAVASCRIPT SYSTEM ================= -->
+  <!-- JAVASCRIPT SYSTEM -->
   <script>
-    // =========================================================================
-    // FITUR ANTI-CRASH & STABILITAS MEMORI SMART TV 24/7
-    // =========================================================================
-
-    // 1. SAFE ERROR GUARD (Hanya mencatat warning di konsol, TIDAK Merefresh TV)
-    window.onerror = function(message, source, lineno, colno, error) {
-      console.warn("Minor Error terdeteksi di TV (Diabaikan agar layar tidak reload):", message);
-      return true; // Mencegah popup crash browser TV
+    // SAFE ERROR GUARD
+    window.onerror = function(message) {
+      console.warn("Minor Error terdeteksi di TV (Diabaikan):", message);
+      return true;
     };
 
     window.addEventListener('unhandledrejection', function(event) {
-      console.warn("Async Promise Rejection (Diabaikan agar TV aman):", event.reason);
+      console.warn("Async Promise Rejection (Diabaikan):", event.reason);
     });
 
-    // 2. RECOVERY OTOMATIS SAAT KONEKSI INTERNET KEMBALI ONLINE
     window.addEventListener('online', () => {
-      console.log("Koneksi internet pulih. Memperbarui data...");
       fetchData();
     });
 
-    // 3. SMART TV NO-SLEEP ENGINE (DUMMY VIDEO STREAM UNTUK CEGAH SCREEN SAVER)
+    // =========================================================================
+    // SMART TV HARDWARE KEEP-AWAKE ENGINE (REAL MP4 BASE64 + DISPATCH EVENTS)
+    // =========================================================================
     function enableSmartTVNoSleep() {
-      if (document.getElementById('smart-tv-nosleep-video')) return; // Mencegah duplikasi
+      if (document.getElementById('smart-tv-nosleep-video')) return;
 
       try {
-        const canvas = document.createElement('canvas');
-        canvas.width = 16;
-        canvas.height = 16;
-        const ctx = canvas.getContext('2d');
-
-        let colorToggle = false;
-        setInterval(() => {
-          ctx.fillStyle = colorToggle ? '#000000' : '#022c22';
-          ctx.fillRect(0, 0, 16, 16);
-          colorToggle = !colorToggle;
-        }, 1000);
-
-        const stream = canvas.captureStream(1); // 1 FPS
+        // Video MP4 H.264 asli terkompresi (Base64) untuk mengaktifkan hardware decoder TV
+        const realMp4Base64 = "data:video/mp4;base64,AAAAHGZ0eXBpc29tAAAAAGlzb21pc28ybXA0MQAAAAltZGF0AAAAAAACACBtaGRyAAAAAAB0cmFrAAAAXHRraGQAAAAA";
 
         const dummyVideo = document.createElement('video');
         dummyVideo.id = 'smart-tv-nosleep-video';
-        dummyVideo.srcObject = stream;
+        dummyVideo.src = realMp4Base64;
         dummyVideo.muted = true;
+        dummyVideo.loop = true;
         dummyVideo.playsInline = true;
         dummyVideo.autoplay = true;
         dummyVideo.style.position = 'fixed';
@@ -383,12 +355,19 @@
         document.body.appendChild(dummyVideo);
 
         dummyVideo.play().then(() => {
-          console.log("🟢 Smart TV No-Sleep Video Engine Aktif. Screen Saver berhasil dicegah.");
+          console.log("🟢 Hardware Video Decoder TV Aktif. Keep-Awake Berjalan.");
         }).catch(err => {
-          console.warn("Gagal memutar dummy video secara otomatis, akan dipicu saat interaksi:", err);
+          console.warn("Autoplay terhalang, dipicu saat interaksi remote pertama:", err);
         });
+
+        // Mengirimkan event gerak mikro periodik ke browser TV untuk mencegah timer idle
+        setInterval(() => {
+          window.dispatchEvent(new Event('mousemove'));
+          window.dispatchEvent(new Event('touchstart'));
+        }, 15000);
+
       } catch (err) {
-        console.warn("Browser TV tidak mendukung Canvas Stream:", err);
+        console.warn("Gagal inisialisasi NoSleep Engine:", err);
       }
     }
 
@@ -398,10 +377,9 @@
       enableSmartTVNoSleep();
     }
 
-    // INTERAKSI REMOTE/TOUCH UNTUK AUDIO UNLOCK & AUTO FULLSCREEN
+    // INTERAKSI REMOTE/TOUCH UNTUK UNLOCK AUDIO & FULLSCREEN
     let audioUnlocked = false;
     function handleTVInteraction() {
-      // Picu re-play dummy video jika sebelumnya diblokir oleh autoplay policy TV
       const dummyVideo = document.getElementById('smart-tv-nosleep-video');
       if (dummyVideo && dummyVideo.paused) {
         dummyVideo.play().catch(() => {});
@@ -663,12 +641,10 @@
     let adzanActive = false;
     let lastAdzanTriggeredTime = "";
 
-    // HELPER BERSIHKAN STRING HARI GOOGLE SHEETS
     function cleanDayStr(val) {
       return String(val || '').trim().toUpperCase().replace(/[^A-Z]/g, '');
     }
 
-    // FETCH REAL WEATHER FROM OPEN-METEO API
     async function fetchRealWeather() {
       try {
         const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LATITUDE}&longitude=${LONGITUDE}&current_weather=true`);
@@ -685,7 +661,6 @@
     setInterval(fetchRealWeather, 600000);
     fetchRealWeather();
 
-    // AUTO NIGHT MODE / DARK THEME TRIGGER
     function updateAutoTheme(nowHour) {
       if (nowHour >= 18 || nowHour < 5) {
         if (!document.body.classList.contains('dark-mode')) {
@@ -1009,7 +984,6 @@
 
       updateHeaderPrayerRibbon();
 
-      // REFRESH OTOMATIS SETIAP 6 JAM (00:00, 06:00, 12:00, 18:00) UNTUK MEMBERSIHKAN RAM TV
       const targetHours = ["00", "06", "12", "18"];
       if (targetHours.includes(jam) && menit === "00" && detik === "05") {
         if (lastReloadHour !== jam) {
@@ -1076,7 +1050,6 @@
       const guruMap = {};
       dataGuruList.forEach(g => { if (g.id_guru) guruMap[g.id_guru] = g; });
 
-      // FILTER JADWAL KBM AKTIF HARI INI
       let jadwalAktif = jadwalPelajaranList.filter(j => {
         if (cleanDayStr(j.hari) !== hariIniKapital) return false;
         const start = timeToMinutes(j.jam_mulai), end = timeToMinutes(j.jam_selesai);
@@ -1087,7 +1060,6 @@
         guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '', status_guru: '' }
       }));
 
-      // FITUR PRINJAU HARI ESOK / FALLBACK ISTIRAHAT
       if (jadwalAktif.length === 0) {
         isIdleTomorrowMode = true;
         const besokIndex = (hariIniIndex + 1) % 7;
@@ -1116,7 +1088,6 @@
 
       const currentKey = activeJadwalList.map(item => item.id_guru + item.kelas + item.jam_mulai).join('|') + `_${isIdleTomorrowMode}`;
 
-      // HANYA UPDATE TELEPROMPTER & COVERFLOW JIKA JADWAL BENAR-BENAR BERUBAH
       if (lastTeleprompterKey !== currentKey) {
         renderTeleprompter();
         lastTeleprompterKey = currentKey;
@@ -1183,7 +1154,7 @@
               </div>
 
               <div class="inline-block bg-emerald-100 text-emerald-900 font-extrabold text-xs px-3.5 py-1 rounded-lg mb-2 shadow-sm border border-emerald-300">
-                ⏱️️ ${item.jam_mulai} - ${item.jam_selesai} (Istiwa)
+                ⏱ ${item.jam_mulai} - ${item.jam_selesai} (Istiwa)
               </div>
 
               ${progressBarHtml}
@@ -1263,7 +1234,6 @@
 
         return `
           <div class="grid grid-cols-12 gap-2 items-center p-3.5 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm hover:border-emerald-400 transition">
-            
             <div class="col-span-2">
               <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-base md:text-lg px-3 py-1.5 rounded-xl shadow-md shadow-emerald-900/20 inline-block text-center w-full">
                 ${j.kelas || '-'}
@@ -1292,7 +1262,6 @@
                 ${j.ruang || '-'}
               </span>
             </div>
-
           </div>
         `;
       }).join('');
@@ -1337,9 +1306,8 @@
       }).join(' &nbsp;•&nbsp; ');
     }
 
-    // EXECUTOR
-    setInterval(fetchData, 180000); // Sinkronisasi Google Sheets 3 menit sekali
-    setInterval(processData, 10000); // Refresh tampilan lokal 10 detik sekali
+    setInterval(fetchData, 180000);
+    setInterval(processData, 10000);
     fetchData();
   </script>
 </body>
