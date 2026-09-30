@@ -160,6 +160,13 @@
 </head>
 <body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
 
+  <!-- ========================================================================= -->
+  <!-- POSISI ELEMEN VIDEO BACKGROUND KEEP-ALIVE UNTUK MENCEGAH SCREEN JAM TV    -->
+  <!-- ========================================================================= -->
+  <video id="bg-keepalive-video" autoplay loop muted playsinline class="fixed inset-0 w-full h-full object-cover z-0 opacity-20 pointer-events-none">
+    <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
+  </video>
+
   <!-- Audio Element Adzan -->
   <audio id="audio-adzan" preload="auto">
     <source src="adzan.mp3" type="audio/mpeg">
@@ -203,7 +210,7 @@
   </div>
 
   <!-- HEADER -->
-  <header class="glass-card rounded-2xl p-3 px-6 flex justify-between items-center flex-shrink-0 mb-4 border-l-8 border-emerald-800">
+  <header class="glass-card relative z-10 rounded-2xl p-3 px-6 flex justify-between items-center flex-shrink-0 mb-4 border-l-8 border-emerald-800">
     <div class="flex items-center gap-4">
       <div class="bg-white/80 p-1 rounded-xl border border-emerald-200/80 shadow-sm flex items-center justify-center">
         <img src="Logo_Pondok.png" alt="Logo" class="h-12 md:h-14 w-auto object-contain drop-shadow-sm" onError="this.style.display='none'">
@@ -257,7 +264,7 @@
   </header>
 
   <!-- KONTEN UTAMA -->
-  <main class="grid grid-cols-12 gap-5 flex-1 min-h-0 mb-4 overflow-hidden">
+  <main class="grid grid-cols-12 gap-5 flex-1 min-h-0 mb-4 overflow-hidden relative z-10">
     <section class="col-span-6 flex flex-col h-full overflow-hidden">
       <div class="flex justify-between items-center mb-2 px-2 flex-shrink-0">
         <span id="section-title-left" class="text-xs font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
@@ -299,7 +306,7 @@
   </main>
 
   <!-- FOOTER / TICKER -->
-  <footer class="glass-card rounded-2xl p-2.5 px-4 flex items-center gap-4 overflow-hidden border-2 border-amber-300/80 bg-gradient-to-r from-amber-500/10 via-white/90 to-amber-500/10 flex-shrink-0">
+  <footer class="glass-card relative z-10 rounded-2xl p-2.5 px-4 flex items-center gap-4 overflow-hidden border-2 border-amber-300/80 bg-gradient-to-r from-amber-500/10 via-white/90 to-amber-500/10 flex-shrink-0">
     <div class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-extrabold text-xs px-4 py-2 rounded-xl flex items-center gap-2 whitespace-nowrap shadow-md shadow-emerald-900/20 flex-shrink-0">
       <span>🛡️ GURU PIKET / INFORMASI</span>
     </div>
@@ -327,62 +334,12 @@
       fetchData();
     });
 
-    // =========================================================================
-    // SMART TV HARDWARE KEEP-AWAKE ENGINE (REAL MP4 BASE64 + DISPATCH EVENTS)
-    // =========================================================================
-    function enableSmartTVNoSleep() {
-      if (document.getElementById('smart-tv-nosleep-video')) return;
-
-      try {
-        // Video MP4 H.264 asli terkompresi (Base64) untuk mengaktifkan hardware decoder TV
-        const realMp4Base64 = "data:video/mp4;base64,AAAAHGZ0eXBpc29tAAAAAGlzb21pc28ybXA0MQAAAAltZGF0AAAAAAACACBtaGRyAAAAAAB0cmFrAAAAXHRraGQAAAAA";
-
-        const dummyVideo = document.createElement('video');
-        dummyVideo.id = 'smart-tv-nosleep-video';
-        dummyVideo.src = realMp4Base64;
-        dummyVideo.muted = true;
-        dummyVideo.loop = true;
-        dummyVideo.playsInline = true;
-        dummyVideo.autoplay = true;
-        dummyVideo.style.position = 'fixed';
-        dummyVideo.style.top = '-100px';
-        dummyVideo.style.left = '-100px';
-        dummyVideo.style.width = '1px';
-        dummyVideo.style.height = '1px';
-        dummyVideo.style.opacity = '0.01';
-        dummyVideo.style.pointerEvents = 'none';
-
-        document.body.appendChild(dummyVideo);
-
-        dummyVideo.play().then(() => {
-          console.log("🟢 Hardware Video Decoder TV Aktif. Keep-Awake Berjalan.");
-        }).catch(err => {
-          console.warn("Autoplay terhalang, dipicu saat interaksi remote pertama:", err);
-        });
-
-        // Mengirimkan event gerak mikro periodik ke browser TV untuk mencegah timer idle
-        setInterval(() => {
-          window.dispatchEvent(new Event('mousemove'));
-          window.dispatchEvent(new Event('touchstart'));
-        }, 15000);
-
-      } catch (err) {
-        console.warn("Gagal inisialisasi NoSleep Engine:", err);
-      }
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', enableSmartTVNoSleep);
-    } else {
-      enableSmartTVNoSleep();
-    }
-
-    // INTERAKSI REMOTE/TOUCH UNTUK UNLOCK AUDIO & FULLSCREEN
+    // INTERAKSI REMOTE/TOUCH UNTUK UNLOCK AUDIO & FULLSCREEN & RE-PLAY VIDEO BACKGROUND
     let audioUnlocked = false;
     function handleTVInteraction() {
-      const dummyVideo = document.getElementById('smart-tv-nosleep-video');
-      if (dummyVideo && dummyVideo.paused) {
-        dummyVideo.play().catch(() => {});
+      const bgVideo = document.getElementById('bg-keepalive-video');
+      if (bgVideo && bgVideo.paused) {
+        bgVideo.play().catch(() => {});
       }
 
       if (!audioUnlocked) {
