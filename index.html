@@ -3,32 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Digital Signage - Jadwal Guru & Waktu Adzan Realtime</title>
+  <title>Digital Signage - Jadwal Guru & Waktu Sholat Falak Realtime</title>
 
   <!-- Tailwind CSS & Font -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Library Perhitungan Waktu Sholat Akurat (Adhan.js via CDN) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/adhan/3.0.0/Adhan.min.js"></script>
 
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
     }
-    
+
+    /* Background Cerah & Segar */
     .bg-vibrant {
       background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 40%, #e0e7ff 100%);
     }
 
+    /* Kartu Kaca Cerah (Light Glassmorphism) */
     .glass-card {
-      background: rgba(255, 255, 255, 0.88);
+      background: rgba(255, 255, 255, 0.90);
       backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.8);
       box-shadow: 0 20px 40px -15px rgba(0, 100, 225, 0.12);
     }
 
-    /* ================= iOS COVER FLOW 3D REAL ANIMATION ================= */
+    /* ================= iOS COVER FLOW 3D ANIMATION ================= */
     .coverflow-container {
       perspective: 1200px;
       display: flex;
@@ -129,18 +128,18 @@
 </head>
 <body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
 
-  <!-- Audio Element Adzan Lokal (Membaca file adzan.mp3 di GitHub) -->
+  <!-- Audio Element Adzan Lokal -->
   <audio id="audio-adzan" preload="auto">
     <source src="adzan.mp3" type="audio/mpeg">
   </audio>
 
   <!-- Modal Layar Penuh Adzan (Hanya muncul saat waktu sholat) -->
-  <div id="modal-adzan" class="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-950 text-white z-50 hidden flex-col items-center justify-center p-8 text-center">
+  <div id="modal-adzan" class="fixed inset-0 bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-900 text-white z-50 hidden flex-col items-center justify-center p-8 text-center">
     <div class="bg-emerald-500/20 p-6 rounded-full mb-6 border border-emerald-400/30 animate-pulse">
       <span class="text-6xl">🕌</span>
     </div>
     <span class="bg-emerald-500/30 text-emerald-300 font-extrabold text-sm px-4 py-1.5 rounded-full uppercase tracking-widest mb-3 border border-emerald-400/30">
-      MEMASUKI WAKTU SHOLAT
+      MEMASUKI WAKTU SHOLAT ISTIWA
     </span>
     <h1 id="nama-sholat-adzan" class="text-6xl font-black tracking-tight text-white mb-4">ZHUHUR</h1>
     <p class="text-emerald-100 text-xl max-w-lg mb-8 font-medium">Mari sejenak menghentikan aktivitas dan menunaikan ibadah sholat secara berjamaah.</p>
@@ -164,14 +163,33 @@
       </div>
     </div>
 
-    <!-- Jam Istiwa Digital & Jadwal Sholat -->
-    <div class="flex items-center gap-4">
-      <div class="text-right hidden md:block">
-        <span id="label-sholat-next" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Sholat Berikutnya</span>
-        <span id="time-sholat-next" class="text-base font-extrabold text-emerald-600">--:--</span>
+    <!-- RIBBON 5 WAKTU SHOLAT FALAK CERAH -->
+    <div class="hidden lg:flex items-center gap-2 bg-emerald-50/80 p-1.5 rounded-2xl border border-emerald-200/80">
+      <div id="box-subuh" class="px-3 py-1.5 rounded-xl text-center border border-transparent transition">
+        <span class="text-[9px] font-bold text-emerald-800 uppercase block">SUBUH</span>
+        <span id="time-subuh" class="text-xs font-black text-slate-800">--:--</span>
       </div>
+      <div id="box-dzuhur" class="px-3 py-1.5 rounded-xl text-center border border-transparent transition">
+        <span class="text-[9px] font-bold text-emerald-800 uppercase block">DZUHUR</span>
+        <span id="time-dzuhur" class="text-xs font-black text-slate-800">12:04</span>
+      </div>
+      <div id="box-ashar" class="px-3 py-1.5 rounded-xl text-center border border-transparent transition">
+        <span class="text-[9px] font-bold text-emerald-800 uppercase block">ASHAR</span>
+        <span id="time-ashar" class="text-xs font-black text-slate-800">--:--</span>
+      </div>
+      <div id="box-maghrib" class="px-3 py-1.5 rounded-xl text-center border border-transparent transition">
+        <span class="text-[9px] font-bold text-emerald-800 uppercase block">MAGHRIB</span>
+        <span id="time-maghrib" class="text-xs font-black text-slate-800">--:--</span>
+      </div>
+      <div id="box-isya" class="px-3 py-1.5 rounded-xl text-center border border-transparent transition">
+        <span class="text-[9px] font-bold text-emerald-800 uppercase block">ISYA</span>
+        <span id="time-isya" class="text-xs font-black text-slate-800">--:--</span>
+      </div>
+    </div>
 
-      <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-2 rounded-2xl shadow-lg shadow-teal-500/20 text-center">
+    <!-- Jam Istiwa Digital -->
+    <div class="flex items-center gap-4">
+      <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-5 py-2 rounded-2xl shadow-lg shadow-teal-500/20 text-center">
         <div id="live-clock" class="text-3xl font-black tracking-wider">00:00:00</div>
         <div class="text-[10px] uppercase font-bold tracking-widest text-emerald-100">☀️ JAM ISTIWA LOKAL</div>
       </div>
@@ -235,7 +253,7 @@
     <div class="bg-amber-500 text-white font-extrabold text-xs px-4 py-2 rounded-xl flex items-center gap-2 whitespace-nowrap shadow-md shadow-amber-500/20 flex-shrink-0">
       <span>🛡️ GURU PIKET HARI INI</span>
     </div>
-    
+
     <div class="overflow-hidden w-full relative">
       <div id="piket-ticker" class="flex items-center gap-8 font-semibold text-slate-700 text-sm">
         <span>Memuat data guru piket...</span>
@@ -243,12 +261,241 @@
     </div>
   </footer>
 
-  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <!-- ================= JAVASCRIPT & RUMUS FALAK MANDIRI ================= -->
   <script>
+    // =========================================================================
+    // MESIN FALAK WAKTU SHOLAT ISTIWA (100% MANDIRI & ZERO DEPENDENCY)
+    // =========================================================================
+    const DATABASE_BULAN = {
+      4:  { nama: "April",     buruj: 0,  tafawut: 10, dBuruj: 0,  arah: "UTARA" },
+      5:  { nama: "Mei",       buruj: 1,  tafawut: 9,  dBuruj: 30, arah: "UTARA" },
+      6:  { nama: "Juni",      buruj: 2,  tafawut: 9,  dBuruj: 60, arah: "UTARA" },
+      7:  { nama: "Juli",      buruj: 3,  tafawut: 7,  dBuruj: 0,  arah: "UTARA" },
+      8:  { nama: "Agustus",   buruj: 4,  tafawut: 7,  dBuruj: 30, arah: "UTARA" },
+      9:  { nama: "September", buruj: 5,  tafawut: 7,  dBuruj: 60, arah: "UTARA" },
+      10: { nama: "Oktober",   buruj: 6,  tafawut: 6,  dBuruj: 0,  arah: "SELATAN" },
+      11: { nama: "Nopember",  buruj: 7,  tafawut: 7,  dBuruj: 30, arah: "SELATAN" },
+      12: { nama: "Desember",  buruj: 8,  tafawut: 7,  dBuruj: 60, arah: "SELATAN" },
+      1:  { nama: "Januari",   buruj: 9,  tafawut: 9,  dBuruj: 0,  arah: "SELATAN" },
+      2:  { nama: "Februari",  buruj: 10, tafawut: 10, dBuruj: 30, arah: "SELATAN" },
+      3:  { nama: "Maret",     buruj: 11, tafawut: 8,  dBuruj: 60, arah: "SELATAN" }
+    };
+
+    const BURUJ_LOOKUP = [
+      { dBuruj: 0,  arah: "UTARA" }, { dBuruj: 30, arah: "UTARA" }, { dBuruj: 60, arah: "UTARA" },
+      { dBuruj: 0,  arah: "UTARA" }, { dBuruj: 30, arah: "UTARA" }, { dBuruj: 60, arah: "UTARA" },
+      { dBuruj: 0,  arah: "SELATAN" }, { dBuruj: 30, arah: "SELATAN" }, { dBuruj: 60, arah: "SELATAN" },
+      { dBuruj: 0,  arah: "SELATAN" }, { dBuruj: 30, arah: "SELATAN" }, { dBuruj: 60, arah: "SELATAN" }
+    ];
+
+    function calcLogSin(deg) { const r = (deg * Math.PI) / 180, v = Math.abs(Math.sin(r)); return v === 0 ? 0 : 10 + Math.log10(v); }
+    function calcLogCos(deg) { const r = (deg * Math.PI) / 180, v = Math.abs(Math.cos(r)); return v === 0 ? 0 : 10 + Math.log10(v); }
+    function calcSin(deg) { return Math.sin((deg * Math.PI) / 180); }
+    function calcCos(deg) { return Math.cos((deg * Math.PI) / 180); }
+    function calcCot(deg) { return 1 / Math.tan((deg * Math.PI) / 180); }
+
+    function invLogSin(logVal) {
+      let target = Math.round(logVal * 1e5) / 1e5, bestD = 0, bestM = 0;
+      for (let d = 0; d < 90; d++) {
+        for (let m = 0; m < 60; m++) {
+          if (Math.round(calcLogSin(d + m / 60) * 1e5) / 1e5 <= target) { bestD = d; bestM = m; }
+        }
+      }
+      return { deg: bestD, min: bestM };
+    }
+
+    function invSin(sinVal) {
+      let target = Math.round(sinVal * 1e5) / 1e5, bestD = 0, bestM = 0;
+      for (let d = 0; d < 90; d++) {
+        for (let m = 0; m < 60; m++) {
+          if (Math.round(calcSin(d + m / 60) * 1e5) / 1e5 <= target) { bestD = d; bestM = m; }
+        }
+      }
+      return { deg: bestD, min: bestM };
+    }
+
+    function invCot(cotVal) {
+      let target = Math.round(cotVal * 1e5) / 1e5;
+      for (let d = 1; d < 90; d++) {
+        for (let m = 0; m < 60; m++) {
+          if (Math.round(calcCot(d + m / 60) * 1e5) / 1e5 <= target) return { deg: d, min: m };
+        }
+      }
+      return { deg: 89, min: 59 };
+    }
+
+    function addDms(d1, m1, d2, m2) {
+      let total = (d1 * 60 + m1) + (d2 * 60 + m2);
+      return { deg: Math.floor(total / 60), min: total % 60 };
+    }
+
+    function subDms(d1, m1, d2, m2) {
+      let total = (d1 * 60 + m1) - (d2 * 60 + m2);
+      if (total < 0) total += 360 * 60;
+      return { deg: Math.floor(total / 60), min: total % 60 };
+    }
+
+    function convertLattice4(deg, min) {
+      let minMult = min * 4;
+      let minCarry = Math.floor(minMult / 60);
+      let minRem = minMult % 60;
+
+      let degMult = deg * 4;
+      let degCarry = Math.floor(degMult / 60);
+      let degRem = degMult % 60;
+
+      let detik = minRem;
+      let menitSum = minCarry + degRem;
+      let jamCarry = Math.floor(menitSum / 60);
+      let menit = menitSum % 60;
+      let jam = (degCarry + jamCarry) % 24;
+
+      return { jam, menit, detik };
+    }
+
+    function hitungWaktuSholatFalak(dateObj = new Date(), latDeg = 7, latMin = 39, latArah = "SELATAN") {
+      const tglInput = dateObj.getDate();
+      const blnInput = dateObj.getMonth() + 1;
+
+      const refBulan = DATABASE_BULAN[blnInput] || DATABASE_BULAN[1];
+      const R = {};
+
+      R.tgl = tglInput; R.tafawut = refBulan.tafawut; R.burujAwal = refBulan.buruj;
+      let sumSyams = R.tgl + R.tafawut;
+      let burujTambah = sumSyams > 30 ? 1 : 0;
+      R.darajahSyams = sumSyams > 30 ? sumSyams - 30 : sumSyams;
+      R.burujAkhir = (R.burujAwal + burujTambah) % 12;
+
+      R.darajahBuruj = BURUJ_LOOKUP[R.burujAkhir].dBuruj;
+      R.arahAkhir = BURUJ_LOOKUP[R.burujAkhir].arah;
+      R.majmuah = R.darajahSyams + R.darajahBuruj;
+      R.qaidah90 = 90;
+
+      const golDirect = [0, 1, 2, 6, 7, 8];
+      R.budDarajah = golDirect.includes(R.burujAkhir) ? R.majmuah : R.qaidah90 - R.majmuah;
+
+      R.logSinBud = calcLogSin(R.budDarajah);
+      R.logSinMaylAzham = 9.59983;
+
+      let totalLogSin1 = R.logSinBud + R.logSinMaylAzham;
+      if (totalLogSin1 >= 10) totalLogSin1 -= 10;
+      R.logSinMaylAwwal = totalLogSin1;
+
+      const maylAwwalDms = invLogSin(R.logSinMaylAwwal);
+      R.maylAwwalDeg = maylAwwalDms.deg; R.maylAwwalMin = maylAwwalDms.min;
+
+      R.latDeg = latDeg; R.latMin = latMin; R.latArah = latArah;
+      R.isArahSama = (R.arahAkhir === R.latArah);
+
+      if (R.isArahSama) {
+        let m1 = R.maylAwwalDeg * 60 + R.maylAwwalMin;
+        let m2 = R.latDeg * 60 + R.latMin;
+        let diff = Math.abs(m1 - m2);
+        R.tamamGhayahDeg = Math.floor(diff / 60); R.tamamGhayahMin = diff % 60;
+      } else {
+        let res = addDms(R.maylAwwalDeg, R.maylAwwalMin, R.latDeg, R.latMin);
+        R.tamamGhayahDeg = res.deg; R.tamamGhayahMin = res.min;
+      }
+
+      let ghayahRes = subDms(90, 0, R.tamamGhayahDeg, R.tamamGhayahMin);
+      R.ghayahIrtifaDeg = ghayahRes.deg; R.ghayahIrtifaMin = ghayahRes.min;
+
+      R.logSinArdhBalad = calcLogSin(R.latDeg + R.latMin / 60);
+      let sumLogQutr = R.logSinMaylAwwal + R.logSinArdhBalad;
+      if (sumLogQutr >= 10) sumLogQutr -= 10;
+      R.logSinBudQutr = sumLogQutr;
+      const budQutrDms = invLogSin(R.logSinBudQutr);
+      R.budQutrDeg = budQutrDms.deg; R.budQutrMin = budQutrDms.min;
+
+      R.logCosMaylAwwal = calcLogCos(R.maylAwwalDeg + R.maylAwwalMin / 60);
+      R.logCosArdhBalad = calcLogCos(R.latDeg + R.latMin / 60);
+      let sumLogAsl = R.logCosMaylAwwal + R.logCosArdhBalad;
+      if (sumLogAsl >= 10) sumLogAsl -= 10;
+      R.logSinAslMutlaq = sumLogAsl;
+
+      R.logSinNishfFadhlah = (R.logSinBudQutr + 10) - R.logSinAslMutlaq;
+      const nishfFadhlahDms = invLogSin(R.logSinNishfFadhlah);
+      R.nishfFadhlahDeg = nishfFadhlahDms.deg; R.nishfFadhlahMin = nishfFadhlahDms.min;
+
+      R.sinQaus1 = 0.00975; R.sinBudQutr = calcSin(R.budQutrDeg + R.budQutrMin / 60);
+      R.sinMujtama1 = R.sinQaus1 + R.sinBudQutr;
+      const mujtama1Dms = invSin(R.sinMujtama1);
+      R.logSinMujtama1 = calcLogSin(mujtama1Dms.deg + mujtama1Dms.min / 60);
+      R.logSinBaqi1 = (R.logSinMujtama1 + 10) - R.logSinAslMutlaq;
+      const baqi1Dms = invLogSin(R.logSinBaqi1);
+      let ikhtilafRes = subDms(baqi1Dms.deg, baqi1Dms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
+
+      R.sinQaus2 = 0.00436; R.sinMujtama2 = R.sinQaus2 + R.sinBudQutr;
+      const mujtama2Dms = invSin(R.sinMujtama2);
+      R.logSinMujtama2 = calcLogSin(mujtama2Dms.deg + mujtama2Dms.min / 60);
+      R.logSinBaqi2 = (R.logSinMujtama2 + 10) - R.logSinAslMutlaq;
+      const baqi2Dms = invLogSin(R.logSinBaqi2);
+      let qutrSyamsRes = subDms(baqi2Dms.deg, baqi2Dms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
+      let tamkiniyahRes = addDms(qutrSyamsRes.deg, qutrSyamsRes.min, ikhtilafRes.deg, ikhtilafRes.min);
+
+      R.qausHaqiqiRes = R.isArahSama ? addDms(90, 0, R.nishfFadhlahDeg, R.nishfFadhlahMin) : subDms(90, 0, R.nishfFadhlahDeg, R.nishfFadhlahMin);
+      R.qausMaraiRes = addDms(R.qausHaqiqiRes.deg, R.qausHaqiqiRes.min, tamkiniyahRes.deg, tamkiniyahRes.min);
+      const maghribBox = convertLattice4(R.qausMaraiRes.deg, R.qausMaraiRes.min);
+
+      // --- ISYA & SUBUH ---
+      R.logSinIsyaPaten = 9.46594;
+      R.logSinBaqiIsya = (R.logSinIsyaPaten + 10) - R.logSinAslMutlaq;
+      const baqiIsyaDms = invLogSin(R.logSinBaqiIsya);
+      R.sinBaqiIsya = calcSin(baqiIsyaDms.deg + baqiIsyaDms.min / 60);
+      R.sinNishfFadhlah = calcSin(R.nishfFadhlahDeg + R.nishfFadhlahMin / 60);
+      R.sinHasilIsya = R.isArahSama ? (R.sinBaqiIsya + R.sinNishfFadhlah) : (R.sinBaqiIsya - R.sinNishfFadhlah);
+      const hasilIsyaDms = invSin(R.sinHasilIsya);
+      let resIsya = R.isArahSama ? subDms(hasilIsyaDms.deg, hasilIsyaDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin) : addDms(hasilIsyaDms.deg, hasilIsyaDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
+      let awalIsyaRes = addDms(resIsya.deg, resIsya.min, R.qausMaraiRes.deg, R.qausMaraiRes.min);
+      const isyaBox = convertLattice4(awalIsyaRes.deg, awalIsyaRes.min);
+
+      R.logSinSubhPaten = 9.51264;
+      R.logSinBaqiSubh = (R.logSinSubhPaten + 10) - R.logSinAslMutlaq;
+      const baqiSubhDms = invLogSin(R.logSinBaqiSubh);
+      R.sinBaqiSubh = calcSin(baqiSubhDms.deg + baqiSubhDms.min / 60);
+      R.sinHasilSubh = R.isArahSama ? (R.sinBaqiSubh + R.sinNishfFadhlah) : (R.sinBaqiSubh - R.sinNishfFadhlah);
+      const hasilSubhDms = invSin(R.sinHasilSubh);
+      let resSubh = R.isArahSama ? subDms(hasilSubhDms.deg, hasilSubhDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin) : addDms(hasilSubhDms.deg, hasilSubhDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
+      let qausThuluRes = subDms(180, 0, R.qausMaraiRes.deg, R.qausMaraiRes.min);
+      let totalMinLail = qausThuluRes.deg * 60 + qausThuluRes.min;
+      let totalMinFajr = resSubh.deg * 60 + resSubh.min;
+      let diffSubhMin = Math.abs(totalMinLail - totalMinFajr);
+      const subhBox = convertLattice4(Math.floor(diffSubhMin / 60), diffSubhMin % 60);
+
+      // --- ASAR ---
+      R.cotGhayahIrtifa = calcCot(R.ghayahIrtifaDeg + R.ghayahIrtifaMin / 60);
+      R.cotIrtifaAsr = R.cotGhayahIrtifa + 1.00000;
+      const irtifaAsrDms = invCot(R.cotIrtifaAsr);
+      R.sinIrtifaAsr = calcSin(irtifaAsrDms.deg + irtifaAsrDms.min / 60);
+      R.sinBudQutrAsr = calcSin(R.budQutrDeg + R.budQutrMin / 60);
+      R.sinMuaddalAsr = R.isArahSama ? (R.sinIrtifaAsr - R.sinBudQutrAsr) : (R.sinIrtifaAsr + R.sinBudQutrAsr);
+      const muaddalAsrDms = invSin(R.sinMuaddalAsr);
+      R.logSinMuaddalAsr = calcLogSin(muaddalAsrDms.deg + muaddalAsrDms.min / 60);
+      R.logSinTamamFadhlAsr = (R.logSinMuaddalAsr + 10) - R.logSinAslMutlaq;
+      const tamamFadhlAsrDms = invLogSin(R.logSinTamamFadhlAsr);
+
+      let rawAsrDeg = tamamFadhlAsrDms.deg + tamamFadhlAsrDms.min / 60;
+      let finalAsrDegFloat = (rawAsrDeg < 45) ? (90 - rawAsrDeg) : rawAsrDeg;
+      let fAsrDeg = Math.floor(finalAsrDegFloat);
+      let fAsrMin = Math.round((finalAsrDegFloat - fAsrDeg) * 60);
+      if (fAsrMin === 60) { fAsrDeg += 1; fAsrMin = 0; }
+      const asrBox = convertLattice4(fAsrDeg, fAsrMin);
+
+      const pad = n => String(n).padStart(2, '0');
+
+      return {
+        subuh:   `${pad(subhBox.jam)}:${pad(subhBox.menit)}`,
+        dzuhur:  "12:04", // Dzuhur Paten Istiwa
+        ashar:   `${pad((asrBox.jam + 12) % 24)}:${pad(asrBox.menit)}`,
+        maghrib: `${pad((maghribBox.jam + 12) % 24)}:${pad(maghribBox.menit)}`,
+        isya:    `${pad((isyaBox.jam + 12) % 24)}:${pad(isyaBox.menit)}`
+      };
+    }
+
+    // =========================================================================
+    // LOGIKA DASHBOARD SIGNAGE REALTIME
+    // =========================================================================
     const API_URL = "https://script.google.com/macros/s/AKfycbydTT9GCsR3pddbEeHfeDOdKq_w6SkG8AsmgsK1EHT9L2HnUSJ2nraaTbTHsoK68kl2/exec";
-    
-    // Koordinat Pasuruan / Sidogiri untuk Jam Istiwa & Waktu Sholat
-    const LATITUDE = -7.645600;
     const LONGITUDE = 112.836500;
 
     let rawData = JSON.parse(localStorage.getItem('jadwal_signage_cache') || 'null');
@@ -259,7 +506,6 @@
     let adzanActive = false;
     let audioCtx = null;
 
-    // Silent Audio Unlocker jika ada interaksi di TV
     function initAudioSilent() {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -267,76 +513,53 @@
           audioCtx = new AudioContext();
           if (audioCtx.state === 'suspended') audioCtx.resume();
         }
-      } catch (e) {
-        console.warn("Web Audio API warning:", e);
-      }
+      } catch (e) {}
     }
     window.addEventListener('click', initAudioSilent, { once: true });
     window.addEventListener('keydown', initAudioSilent, { once: true });
 
-    // Bunyi Beep Cadangan jika Audio MP3 Gagal
-    function playBeepSound() {
-      if (!audioCtx) initAudioSilent();
-      if (!audioCtx) return;
-      try {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 1.5);
-      } catch (e) {
-        console.warn("Beep failed:", e);
-      }
-    }
+    function updateHeaderPrayerRibbon() {
+      const p = hitungWaktuSholatFalak(new Date());
+      if (!p) return;
 
-    // ================= KALKULASI WAKTU SHOLAT OFFLINE =================
-    function getPrayerTimesToday() {
-      if (typeof adhan === 'undefined') return null;
-
-      const coordinates = new adhan.Coordinates(LATITUDE, LONGITUDE);
-      const date = new Date();
-      const params = adhan.CalculationMethod.Singapore(); // MABIMS Standar Kemenag RI
-      params.fajrAngle = 20;
-      params.ishaAngle = 18;
-
-      const prayerTimes = new adhan.PrayerTimes(coordinates, date, params);
-      const addIhtiyati = (d) => new Date(d.getTime() + 2 * 60000);
-
-      return {
-        subuh: addIhtiyati(prayerTimes.fajr),
-        dzuhur: addIhtiyati(prayerTimes.dhuhr),
-        ashar: addIhtiyati(prayerTimes.asr),
-        maghrib: addIhtiyati(prayerTimes.maghrib),
-        isya: addIhtiyati(prayerTimes.isha)
-      };
-    }
-
-    function checkAndTriggerAdzan() {
-      const pTimes = getPrayerTimesToday();
-      if (!pTimes) return;
+      document.getElementById('time-subuh').innerText = p.subuh;
+      document.getElementById('time-dzuhur').innerText = p.dzuhur;
+      document.getElementById('time-ashar').innerText = p.ashar;
+      document.getElementById('time-maghrib').innerText = p.maghrib;
+      document.getElementById('time-isya').innerText = p.isya;
 
       const now = new Date();
       const formatHM = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
       const nowHM = formatHM(now);
 
       const listSholat = [
-        { name: 'SUBUH', time: formatHM(pTimes.subuh), dateObj: pTimes.subuh },
-        { name: 'DZUHUR', time: formatHM(pTimes.dzuhur), dateObj: pTimes.dzuhur },
-        { name: 'ASHAR', time: formatHM(pTimes.ashar), dateObj: pTimes.ashar },
-        { name: 'MAGHRIB', time: formatHM(pTimes.maghrib), dateObj: pTimes.maghrib },
-        { name: 'ISYA', time: formatHM(pTimes.isya), dateObj: pTimes.isya }
+        { id: 'box-subuh', name: 'SUBUH', time: p.subuh },
+        { id: 'box-dzuhur', name: 'DZUHUR', time: p.dzuhur },
+        { id: 'box-ashar', name: 'ASHAR', time: p.ashar },
+        { id: 'box-maghrib', name: 'MAGHRIB', time: p.maghrib },
+        { id: 'box-isya', name: 'ISYA', time: p.isya }
       ];
 
-      let nextSholat = listSholat.find(s => s.dateObj > now);
+      // Highlight Waktu Sholat Berikutnya
+      let nextSholat = listSholat.find(s => s.time > nowHM);
       if (!nextSholat) nextSholat = listSholat[0];
 
-      document.getElementById('label-sholat-next').innerText = `Sholat Berikutnya (${nextSholat.name})`;
-      document.getElementById('time-sholat-next').innerText = nextSholat.time;
+      listSholat.forEach(s => {
+        const box = document.getElementById(s.id);
+        if (box) {
+          if (s.id === nextSholat.id) {
+            box.className = "px-3 py-1.5 rounded-xl text-center border bg-emerald-600 text-white shadow-md shadow-emerald-500/30 font-bold scale-105 transition-all";
+            box.querySelector('span').className = "text-[9px] font-bold text-emerald-100 uppercase block";
+            box.querySelector('span:nth-child(2)').className = "text-xs font-black text-white";
+          } else {
+            box.className = "px-3 py-1.5 rounded-xl text-center border border-transparent transition";
+            box.querySelector('span').className = "text-[9px] font-bold text-emerald-800 uppercase block";
+            box.querySelector('span:nth-child(2)').className = "text-xs font-black text-slate-800";
+          }
+        }
+      });
 
+      // Pemicu Adzan Otomatis
       if (now.getSeconds() === 0 && !adzanActive) {
         const matchingSholat = listSholat.find(s => s.time === nowHM);
         if (matchingSholat) {
@@ -352,16 +575,10 @@
       modal.classList.remove('hidden');
       modal.classList.add('flex');
 
-      // Putar Audio Adzan
       const audio = document.getElementById('audio-adzan');
       if (audio) {
         audio.currentTime = 0;
-        audio.play().catch(e => {
-          console.warn("Audio autoplay notice:", e);
-          playBeepSound();
-        });
-      } else {
-        playBeepSound();
+        audio.play().catch(e => console.warn("Audio notice:", e));
       }
 
       let duration = 180;
@@ -383,20 +600,16 @@
       }, 1000);
     }
 
-    // Helper Pembersih String Jam
     function cleanTimeStr(val) {
       if (!val) return "00:00";
       const str = val.toString().trim();
       const match = str.match(/(\d{1,2}):(\d{2})/);
       if (match) {
-        const h = String(match[1]).padStart(2, '0');
-        const m = String(match[2]).padStart(2, '0');
-        return `${h}:${m}`;
+        return `${String(match[1]).padStart(2, '0')}:${String(match[2]).padStart(2, '0')}`;
       }
       return str;
     }
 
-    // Positional Column Parsers
     function parseJadwalRow(item) {
       if (item._c0 !== undefined && item._c1 !== undefined) {
         return {
@@ -464,28 +677,19 @@
     }
 
     function timeToMinutes(val) {
-      if (val === null || val === undefined || val === "") return -1;
+      if (!val) return -1;
       const str = val.toString().trim();
-
       const match = str.match(/(\d{1,2}):(\d{2})/);
-      if (match) {
-        return (parseInt(match[1], 10) * 60) + parseInt(match[2], 10);
-      }
-
+      if (match) return (parseInt(match[1], 10) * 60) + parseInt(match[2], 10);
       const num = parseFloat(str);
-      if (!isNaN(num) && num >= 0 && num < 1) {
-        return Math.round(num * 24 * 60);
-      }
-
+      if (!isNaN(num) && num >= 0 && num < 1) return Math.round(num * 24 * 60);
       return -1;
     }
 
     function getDirectDriveImg(url) {
       if (!url) return 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
       const match = url.toString().match(/\/d\/([a-zA-Z0-9_-]+)/) || url.toString().match(/id=([a-zA-Z0-9_-]+)/);
-      if (match && match[1]) {
-        return `https://lh3.googleusercontent.com/d/${match[1]}`;
-      }
+      if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
       return url;
     }
 
@@ -493,50 +697,24 @@
       const startOfYear = new Date(now.getFullYear(), 0, 0);
       const diff = now - startOfYear;
       const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
-
       const gamma = (2 * Math.PI / 365) * (dayOfYear - 1 + (now.getHours() - 12) / 24);
-      const eotMinutes = 229.18 * (
-        0.000075 +
-        0.001868 * Math.cos(gamma) -
-        0.032077 * Math.sin(gamma) -
-        0.014615 * Math.cos(2 * gamma) -
-        0.040849 * Math.sin(2 * gamma)
-      );
-
+      const eotMinutes = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma) - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
       const lonCorrectionMinutes = (LONGITUDE - 105) * 4;
-      const totalAdjustmentMs = (lonCorrectionMinutes + eotMinutes) * 60 * 1000;
-
-      return new Date(now.getTime() + totalAdjustmentMs);
+      return new Date(now.getTime() + (lonCorrectionMinutes + eotMinutes) * 60 * 1000);
     }
 
     function getHijriDate(date) {
-      const islamicMonths = [
-        "Muharram", "Safar", "Rabi'ul Awwal", "Rabi'ul Akhir",
-        "Jumadil Ula", "Jumadil Akhirah", "Rajab", "Sya'ban",
-        "Ramadhan", "Syawwal", "Dzulqa'dah", "Dzulhijjah"
-      ];
-
-      const d = date.getDate();
-      const m = date.getMonth() + 1;
-      const y = date.getFullYear();
-
-      let julianDay = Math.floor((1461 * (y + 4800 + Math.floor((m - 14) / 12))) / 4) +
-                      Math.floor((367 * (m - 2 - 12 * (Math.floor((m - 14) / 12)))) / 12) -
-                      Math.floor((3 * (Math.floor((y + 4900 + Math.floor((m - 14) / 12)) / 100))) / 4) +
-                      d - 32075;
-
+      const islamicMonths = ["Muharram", "Safar", "Rabi'ul Awwal", "Rabi'ul Akhir", "Jumadil Ula", "Jumadil Akhirah", "Rajab", "Sya'ban", "Ramadhan", "Syawwal", "Dzulqa'dah", "Dzulhijjah"];
+      const d = date.getDate(), m = date.getMonth() + 1, y = date.getFullYear();
+      let julianDay = Math.floor((1461 * (y + 4800 + Math.floor((m - 14) / 12))) / 4) + Math.floor((367 * (m - 2 - 12 * (Math.floor((m - 14) / 12)))) / 12) - Math.floor((3 * (Math.floor((y + 4900 + Math.floor((m - 14) / 12)) / 100))) / 4) + d - 32075;
       let l = julianDay - 1948440 + 10632;
       let n = Math.floor((l - 1) / 10631);
       l = l - 10631 * n + 354;
-      let j = (Math.floor((10985 - l) / 5316)) * (Math.floor((50 * l) / 17719)) +
-              (Math.floor(l / 5670)) * (Math.floor((43 * l) / 15238));
-      l = l - (Math.floor((30 - j) / 15)) * (Math.floor((17719 * j) / 50)) -
-          (Math.floor(j / 16)) * (Math.floor((15238 * j) / 43)) + 29;
-
+      let j = (Math.floor((10985 - l) / 5316)) * (Math.floor((50 * l) / 17719)) + (Math.floor(l / 5670)) * (Math.floor((43 * l) / 15238));
+      l = l - (Math.floor((30 - j) / 15)) * (Math.floor((17719 * j) / 50)) - (Math.floor(j / 16)) * (Math.floor((15238 * j) / 43)) + 29;
       let month = Math.floor((24 * l) / 709);
       let day = l - Math.floor((709 * month) / 24);
       let year = 30 * n + j - 30;
-
       return `${day} ${islamicMonths[month - 1]} ${year} H`;
     }
 
@@ -551,23 +729,16 @@
 
       const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
       const bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-      const masehiStr = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()} M`;
+      document.getElementById('info-tanggal').innerText = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()} M  |  ${getHijriDate(now)}`;
 
-      const hijriStr = getHijriDate(now);
+      updateHeaderPrayerRibbon();
 
-      document.getElementById('info-tanggal').innerText = `${masehiStr}  |  ${hijriStr}`;
-
-      checkAndTriggerAdzan();
-
-      if (jam === "00" && menit === "00" && detik === "05") {
-        window.location.reload();
-      }
+      if (jam === "00" && menit === "00" && detik === "05") window.location.reload();
     }
 
     setInterval(updateClockAndDates, 1000);
     updateClockAndDates();
 
-    // ================= SIKLUS AMBIL DATA ANTI-GAGAL 24/7 =================
     async function fetchData(retryCount = 0) {
       const statusBadge = document.getElementById('api-status-badge');
       const controller = new AbortController();
@@ -576,84 +747,62 @@
       try {
         const res = await fetch(API_URL, { signal: controller.signal });
         clearTimeout(timeoutId);
-
-        if (!res.ok) throw new Error(`HTTP Error Status ${res.status}`);
-
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
         const newData = await res.json();
 
         if (newData && (newData.data_guru || newData.jadwal_pelajaran)) {
           rawData = newData;
           localStorage.setItem('jadwal_signage_cache', JSON.stringify(newData));
-
-          const totalGuru = (rawData.data_guru || []).length;
-          const totalJadwal = (rawData.jadwal_pelajaran || []).length;
-
           statusBadge.className = "bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full";
-          statusBadge.innerText = `🟢 Terhubung (${totalGuru} Guru, ${totalJadwal} Jadwal)`;
-
+          statusBadge.innerText = `🟢 Terhubung (${(rawData.data_guru||[]).length} Guru, ${(rawData.jadwal_pelajaran||[]).length} Jadwal)`;
           processData();
           return;
         }
       } catch (err) {
         clearTimeout(timeoutId);
-        console.warn(`[24/7 Signage Retry ${retryCount + 1}] Network issue:`, err);
-
         if (retryCount < 3) {
           setTimeout(() => fetchData(retryCount + 1), 3000);
           return;
         }
-
         if (rawData) {
           statusBadge.className = "bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full";
-          statusBadge.innerText = `🟡 Mode Offline Cache (Mencoba Ulang...)`;
+          statusBadge.innerText = `🟡 Mode Cache Offline`;
           processData();
         } else {
           statusBadge.className = "bg-rose-100 text-rose-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full";
-          statusBadge.innerText = `🔴 Mengoneksikan Ulang...`;
+          statusBadge.innerText = `🔴 Mengoneksikan...`;
         }
       }
     }
 
     function processData() {
       if (!rawData) return;
-
       const now = new Date();
       const istiwaNow = getIstiwaTime(now);
-
       const hariList = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
       const hariIniKapital = hariList[now.getDay()];
-      
       const menitSekarangIstiwa = (istiwaNow.getHours() * 60) + istiwaNow.getMinutes();
 
-      // Normalisasi Data
       const dataGuruList = (rawData.data_guru || []).map(parseGuruRow);
       const jadwalPelajaranList = (rawData.jadwal_pelajaran || []).map(parseJadwalRow);
       const kehadiranList = (rawData.kehadiran || []).map(k => {
         const vals = Object.values(k);
         return {
           kode_guru: String(k._c0 || vals[0] || '').trim(),
-          status: String(k._c1 || vals[1] || 'Hadir').trim(),
-          guru_pengganti: String(k._c2 || vals[2] || '-').trim()
+          status: String(k._c1 || vals[1] || 'Hadir').trim()
         };
       });
       const jadwalPiketList = (rawData.jadwal_piket || []).map(parsePiketRow);
 
       const guruMap = {};
       dataGuruList.forEach(g => { if (g.id_guru) guruMap[g.id_guru] = g; });
-
       const kehadiranMap = {};
       kehadiranList.forEach(k => { if (k.kode_guru) kehadiranMap[k.kode_guru] = k; });
 
-      // Filter Jadwal KBM Jam Istiwa Aktif
       activeJadwalList = jadwalPelajaranList.filter(j => {
-        const hariJadwal = (j.hari || '').toString().trim().toUpperCase();
-        if (hariJadwal !== hariIniKapital) return false;
-
-        const start = timeToMinutes(j.jam_mulai);
-        const end = timeToMinutes(j.jam_selesai);
-
+        if ((j.hari || '').toString().trim().toUpperCase() !== hariIniKapital) return false;
+        const start = timeToMinutes(j.jam_mulai), end = timeToMinutes(j.jam_selesai);
         if (start === -1 || end === -1) return false;
-
         return menitSekarangIstiwa >= start && menitSekarangIstiwa < end;
       }).map(j => ({
         ...j,
@@ -673,7 +822,6 @@
       renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList);
     }
 
-    // ================= RENDER iOS COVER FLOW 3D =================
     function renderCoverflowDOM() {
       const stage = document.getElementById('coverflow-stage');
       const counter = document.getElementById('counter-rolling');
@@ -692,7 +840,6 @@
 
       stage.innerHTML = activeJadwalList.map((item, idx) => {
         const fotoUrl = getDirectDriveImg(item.guru.foto);
-
         let statusBadge = `<span class="bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md shadow-emerald-500/20">● HADIR</span>`;
         const statusText = (item.kehadiran.status || '').toString().toLowerCase();
         if (statusText === 'izin' || statusText === 'sakit') {
@@ -702,8 +849,6 @@
         return `
           <div class="coverflow-card hidden-right" id="cover-card-${idx}">
             <div class="flex flex-col items-center text-center">
-              
-              <!-- Foto Guru -->
               <div class="relative mb-3">
                 <div class="w-36 h-36 md:w-44 md:h-44 rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-slate-100">
                   <img src="${fotoUrl}" alt="${item.guru.nama_guru}" class="w-full h-full object-cover" onError="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
@@ -713,7 +858,6 @@
                 </div>
               </div>
 
-              <!-- Informasi Guru -->
               <div class="inline-block bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-1 rounded-lg mb-2 shadow-sm">
                 ⏱️ ${item.jam_mulai} - ${item.jam_selesai} (Istiwa)
               </div>
@@ -723,7 +867,6 @@
               </h2>
               <p class="text-blue-600 font-bold text-base mb-4 line-clamp-1">${item.mapel || '-'}</p>
 
-              <!-- Grid Kelas & Ruang -->
               <div class="grid grid-cols-2 gap-3 w-full">
                 <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60 shadow-inner">
                   <span class="text-[10px] uppercase font-bold text-slate-400 block">Kelas</span>
@@ -734,7 +877,6 @@
                   <span class="text-lg font-black text-emerald-600">${item.ruang || '-'}</span>
                 </div>
               </div>
-
             </div>
           </div>
         `;
@@ -746,27 +888,19 @@
     function updateCoverflowPositions() {
       const total = activeJadwalList.length;
       if (total === 0) return;
-
       document.getElementById('counter-rolling').innerText = `${currentJadwalIndex + 1} / ${total}`;
 
       for (let i = 0; i < total; i++) {
         const card = document.getElementById(`cover-card-${i}`);
         if (!card) continue;
-
         let diff = (i - currentJadwalIndex + total) % total;
         if (diff > total / 2) diff -= total;
 
-        if (diff === 0) {
-          card.className = "coverflow-card active";
-        } else if (diff === -1 || (diff === total - 1 && total > 2)) {
-          card.className = "coverflow-card prev";
-        } else if (diff === 1 || (diff === -(total - 1) && total > 2)) {
-          card.className = "coverflow-card next";
-        } else if (diff < 0) {
-          card.className = "coverflow-card hidden-left";
-        } else {
-          card.className = "coverflow-card hidden-right";
-        }
+        if (diff === 0) card.className = "coverflow-card active";
+        else if (diff === -1 || (diff === total - 1 && total > 2)) card.className = "coverflow-card prev";
+        else if (diff === 1 || (diff === -(total - 1) && total > 2)) card.className = "coverflow-card next";
+        else if (diff < 0) card.className = "coverflow-card hidden-left";
+        else card.className = "coverflow-card hidden-right";
       }
     }
 
@@ -779,17 +913,13 @@
       }, 4000);
     }
 
-    // ================= RENDER TELEPROMPTER =================
     function renderTeleprompter() {
       const tbody = document.getElementById('tabel-teleprompter-body');
-
       if (activeJadwalList.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" class="py-12 text-center text-slate-400">Tidak ada KBM aktif jam ini.</td></tr>`;
         return;
       }
-
       const listToRender = [...activeJadwalList, ...activeJadwalList];
-
       tbody.innerHTML = listToRender.map(j => `
         <tr class="hover:bg-white/80 transition">
           <td class="w-1/6 py-3 pl-2 font-black text-indigo-600">${j.kelas || '-'}</td>
@@ -800,25 +930,17 @@
       `).join('');
     }
 
-    // ================= RENDER GURU PIKET =================
     function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
       const piketTicker = document.getElementById('piket-ticker');
-
       let piketAktif = jadwalPiketList.filter(p => {
-        const hariPiket = (p.hari || '').toString().trim().toUpperCase();
-        if (hariPiket !== hariIniKapital) return false;
-
-        const start = timeToMinutes(p.jam_mulai);
-        const end = timeToMinutes(p.jam_selesai);
+        if ((p.hari || '').toString().trim().toUpperCase() !== hariIniKapital) return false;
+        const start = timeToMinutes(p.jam_mulai), end = timeToMinutes(p.jam_selesai);
         if (start === -1 || end === -1) return false;
-
         return menitSekarangIstiwa >= start && menitSekarangIstiwa < end;
       });
 
       if (piketAktif.length === 0) {
-        piketAktif = jadwalPiketList.filter(p => {
-          return (p.hari || '').toString().trim().toUpperCase() === hariIniKapital;
-        });
+        piketAktif = jadwalPiketList.filter(p => (p.hari || '').toString().trim().toUpperCase() === hariIniKapital);
       }
 
       if (piketAktif.length === 0) {
@@ -842,7 +964,6 @@
 
     setInterval(fetchData, 30000);
     setInterval(processData, 10000);
-
     fetchData();
   </script>
 </body>
