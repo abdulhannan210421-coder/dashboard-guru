@@ -127,27 +127,15 @@
     }
   </style>
 </head>
-<body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative" onclick="enableAudioOnTV()">
+<body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
 
-  <!-- Audio Element Adzan -->
-<audio id="audio-adzan" preload="auto">
-  <source src="adzan.mp3" type="audio/mpeg">
-</audio>
-  
-  <!-- Overlay Pemicu Suara Smart TV (Akan hilang begitu diklik) -->
-  <div id="audio-unlock-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white p-6 transition-all duration-500">
-    <div class="bg-blue-600 p-6 rounded-full animate-bounce mb-6 shadow-2xl shadow-blue-500/50">
-      <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
-    </div>
-    <h2 class="text-3xl font-black mb-2 text-center">AKTIFKAN SUARA ADZAN TV</h2>
-    <p class="text-slate-300 mb-8 text-center max-width-md">Klik di mana saja pada layar TV ini 1x untuk mengizinkan web memutar suara Adzan secara otomatis.</p>
-    <button class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-8 py-4 rounded-2xl text-xl shadow-xl transition transform active:scale-95">
-      🔔 Klik Disini Untuk Memulai
-    </button>
-  </div>
+  <!-- Audio Element Adzan Lokal (Membaca file adzan.mp3 di GitHub) -->
+  <audio id="audio-adzan" preload="auto">
+    <source src="adzan.mp3" type="audio/mpeg">
+  </audio>
 
-  <!-- Modal Layar Penuh Adzan (Akan muncul saat masuk waktu sholat) -->
-  <div id="modal-adzan" class="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-950 text-white z-40 hidden flex-col items-center justify-center p-8 text-center animate-fade-in">
+  <!-- Modal Layar Penuh Adzan (Hanya muncul saat waktu sholat) -->
+  <div id="modal-adzan" class="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-950 text-white z-50 hidden flex-col items-center justify-center p-8 text-center">
     <div class="bg-emerald-500/20 p-6 rounded-full mb-6 border border-emerald-400/30 animate-pulse">
       <span class="text-6xl">🕌</span>
     </div>
@@ -178,13 +166,11 @@
 
     <!-- Jam Istiwa Digital & Jadwal Sholat -->
     <div class="flex items-center gap-4">
-      <!-- Info Sholat Berikutnya -->
       <div class="text-right hidden md:block">
         <span id="label-sholat-next" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Sholat Berikutnya</span>
         <span id="time-sholat-next" class="text-base font-extrabold text-emerald-600">--:--</span>
       </div>
 
-      <!-- Jam Istiwa Utama -->
       <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-2 rounded-2xl shadow-lg shadow-teal-500/20 text-center">
         <div id="live-clock" class="text-3xl font-black tracking-wider">00:00:00</div>
         <div class="text-[10px] uppercase font-bold tracking-widest text-emerald-100">☀️ JAM ISTIWA LOKAL</div>
@@ -270,25 +256,44 @@
     let activeJadwalList = [];
     let coverflowTimer = null;
     let lastRenderedCount = -1;
-    let audioUnlocked = false;
     let adzanActive = false;
+    let audioCtx = null;
 
-    // Unlock Audio Context untuk Smart TV
-    function enableAudioOnTV() {
-      if (audioUnlocked) return;
-      const audio = document.getElementById('audio-adzan');
-      audio.play().then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-        audioUnlocked = true;
-        document.getElementById('audio-unlock-overlay').style.display = 'none';
-        console.log("Audio Adzan Smart TV Berhasil Diaktifkan!");
-      }).catch(err => {
-        console.warn("Gagal unlock audio:", err);
-      });
+    // Silent Audio Unlocker jika ada interaksi di TV
+    function initAudioSilent() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          audioCtx = new AudioContext();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+      } catch (e) {
+        console.warn("Web Audio API warning:", e);
+      }
+    }
+    window.addEventListener('click', initAudioSilent, { once: true });
+    window.addEventListener('keydown', initAudioSilent, { once: true });
+
+    // Bunyi Beep Cadangan jika Audio MP3 Gagal
+    function playBeepSound() {
+      if (!audioCtx) initAudioSilent();
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 1.5);
+      } catch (e) {
+        console.warn("Beep failed:", e);
+      }
     }
 
-    // ================= KALKULASI WAKTU SHOLAT OFFLINE (AKURAT SELAMANYA) =================
+    // ================= KALKULASI WAKTU SHOLAT OFFLINE =================
     function getPrayerTimesToday() {
       if (typeof adhan === 'undefined') return null;
 
@@ -299,8 +304,6 @@
       params.ishaAngle = 18;
 
       const prayerTimes = new adhan.PrayerTimes(coordinates, date, params);
-
-      // Tambah +2 Menit Ihtiyati Standar Kemenag
       const addIhtiyati = (d) => new Date(d.getTime() + 2 * 60000);
 
       return {
@@ -328,14 +331,12 @@
         { name: 'ISYA', time: formatHM(pTimes.isya), dateObj: pTimes.isya }
       ];
 
-      // Update Tampilan Sholat Berikutnya di Header
       let nextSholat = listSholat.find(s => s.dateObj > now);
-      if (!nextSholat) nextSholat = listSholat[0]; // besok Subuh
+      if (!nextSholat) nextSholat = listSholat[0];
 
       document.getElementById('label-sholat-next').innerText = `Sholat Berikutnya (${nextSholat.name})`;
       document.getElementById('time-sholat-next').innerText = nextSholat.time;
 
-      // Pemicu Adzan Pas Detik ke-00
       if (now.getSeconds() === 0 && !adzanActive) {
         const matchingSholat = listSholat.find(s => s.time === nowHM);
         if (matchingSholat) {
@@ -353,10 +354,16 @@
 
       // Putar Audio Adzan
       const audio = document.getElementById('audio-adzan');
-      audio.currentTime = 0;
-      audio.play().catch(e => console.warn("Audio autoplay blocked:", e));
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(e => {
+          console.warn("Audio autoplay notice:", e);
+          playBeepSound();
+        });
+      } else {
+        playBeepSound();
+      }
 
-      // Timer Mundur 3 Menit Tampilan Adzan
       let duration = 180;
       const countdownEl = document.getElementById('countdown-adzan');
 
@@ -370,7 +377,7 @@
           clearInterval(cdInterval);
           modal.classList.remove('flex');
           modal.classList.add('hidden');
-          audio.pause();
+          if (audio) audio.pause();
           adzanActive = false;
         }
       }, 1000);
@@ -550,7 +557,6 @@
 
       document.getElementById('info-tanggal').innerText = `${masehiStr}  |  ${hijriStr}`;
 
-      // Cek Waktu Adzan Setiap Detik
       checkAndTriggerAdzan();
 
       if (jam === "00" && menit === "00" && detik === "05") {
@@ -655,7 +661,6 @@
         kehadiran: kehadiranMap[j.id_guru] || { status: 'Hadir' }
       }));
 
-      // Render UI
       renderTeleprompter();
 
       if (lastRenderedCount !== activeJadwalList.length) {
