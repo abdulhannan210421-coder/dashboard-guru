@@ -77,7 +77,7 @@
       background: rgba(255, 255, 255, 0.97);
       border: 2px solid rgba(255, 255, 255, 0.9);
       box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.12);
-      will-change: transform, opacity, filter;
+      will-change: transform, opacity;
     }
 
     body.dark-mode .coverflow-card {
@@ -86,10 +86,9 @@
     }
 
     .coverflow-card.active {
-      transform: translateX(0) scale(1.05) translateZ(0);
+      transform: translate3d(0, 0, 0) scale(1.05);
       z-index: 30;
       opacity: 1;
-      filter: blur(0px);
       box-shadow: 0 30px 60px -12px rgba(6, 95, 70, 0.28), 0 0 0 2.5px #059669;
     }
 
@@ -98,98 +97,74 @@
     }
 
     .coverflow-card.prev {
-      transform: translateX(-52%) scale(0.8) rotateY(26deg) translateZ(-120px);
+      transform: translate3d(-52%, 0, -120px) scale(0.8) rotateY(26deg);
       z-index: 20;
       opacity: 0.45;
-      filter: blur(5px);
       pointer-events: none;
     }
 
     .coverflow-card.next {
-      transform: translateX(52%) scale(0.8) rotateY(-26deg) translateZ(-120px);
+      transform: translate3d(52%, 0, -120px) scale(0.8) rotateY(-26deg);
       z-index: 20;
       opacity: 0.45;
-      filter: blur(5px);
       pointer-events: none;
     }
 
     .coverflow-card.hidden-left {
-      transform: translateX(-110%) scale(0.5) rotateY(40deg) translateZ(-250px);
+      transform: translate3d(-110%, 0, -250px) scale(0.5) rotateY(40deg);
       z-index: 10;
       opacity: 0;
-      filter: blur(10px);
       pointer-events: none;
     }
 
     .coverflow-card.hidden-right {
-      transform: translateX(110%) scale(0.5) rotateY(-40deg) translateZ(-250px);
+      transform: translate3d(110%, 0, -250px) scale(0.5) rotateY(-40deg);
       z-index: 10;
       opacity: 0;
-      filter: blur(10px);
       pointer-events: none;
     }
 
     /* ========================================================================= */
-    /* ANIMASI TIRAI BAMBU (BAMBOO CURTAIN REVEAL) DARI KIRI & KANAN            */
+    /* ANIMASI TIRAI BAMBU RINGAN & RENDER GPU ULTRA SMOOTH                      */
     /* ========================================================================= */
     @keyframes bambooCurtainLeft {
       0% {
-        transform: scaleX(0) skewY(2deg);
-        transform-origin: left center;
+        transform: translate3d(-60px, 0, 0) scaleX(0.85);
         opacity: 0;
-        filter: blur(8px);
-      }
-      70% {
-        transform: scaleX(1.03) skewY(-0.5deg);
-        filter: blur(0px);
       }
       100% {
-        transform: scaleX(1) skewY(0deg);
-        transform-origin: left center;
+        transform: translate3d(0, 0, 0) scaleX(1);
         opacity: 1;
-        filter: blur(0px);
       }
     }
 
     @keyframes bambooCurtainRight {
       0% {
-        transform: scaleX(0) skewY(-2deg);
-        transform-origin: right center;
+        transform: translate3d(60px, 0, 0) scaleX(0.85);
         opacity: 0;
-        filter: blur(8px);
-      }
-      70% {
-        transform: scaleX(1.03) skewY(0.5deg);
-        filter: blur(0px);
       }
       100% {
-        transform: scaleX(1) skewY(0deg);
-        transform-origin: right center;
+        transform: translate3d(0, 0, 0) scaleX(1);
         opacity: 1;
-        filter: blur(0px);
       }
     }
 
     .bamboo-row-left {
-      animation: bambooCurtainLeft 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: bambooCurtainLeft 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       will-change: transform, opacity;
+      backface-visibility: hidden;
     }
 
     .bamboo-row-right {
-      animation: bambooCurtainRight 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: bambooCurtainRight 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       will-change: transform, opacity;
+      backface-visibility: hidden;
     }
 
     /* ANIMASI CLEANER MASCOT / WIPER ANIMATION */
     @keyframes cleanerBob {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-12px) rotate(3deg); }
-    }
-
-    @keyframes sweepSparkle {
-      0% { opacity: 0; transform: scale(0.5) rotate(0deg); }
-      50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
-      100% { opacity: 0; transform: scale(0.5) rotate(360deg); }
+      0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+      50% { transform: translate3d(0, -10px, 0) rotate(3deg); }
     }
 
     @keyframes screenWipeAction {
@@ -208,13 +183,13 @@
     }
 
     .wiping-exit {
-      animation: screenWipeAction 1.8s cubic-bezier(0.77, 0, 0.175, 1) forwards !important;
+      animation: screenWipeAction 1.5s cubic-bezier(0.77, 0, 0.175, 1) forwards !important;
     }
 
     /* FOOTER MARQUEE TICKER */
     @keyframes marqueeScroll {
-      0% { transform: translateX(100%); }
-      100% { transform: translateX(-100%); }
+      0% { transform: translate3d(100%, 0, 0); }
+      100% { transform: translate3d(-100%, 0, 0); }
     }
     .animate-marquee {
       display: flex;
@@ -389,9 +364,6 @@
         </div>
       </div>
     </div>
-
-    <!-- BILAH WIPER GLASS PEMBERSIH UNTUK ANIMASI WIPE LAYAR -->
-    <div id="wiper-blade" class="fixed inset-y-0 left-0 w-16 bg-gradient-to-r from-emerald-400 via-white to-transparent opacity-0 pointer-events-none z-50"></div>
   </div>
 
   <!-- HEADER -->
@@ -486,9 +458,9 @@
           <div class="col-span-2 text-right">RUANG</div>
         </div>
 
-        <!-- CONTAINER BARIS GURU (7 BARIS FULL AREA) -->
+        <!-- CONTAINER BARIS GURU (AUTOMATIC BALANCED HEIGHT) -->
         <div class="flex-1 overflow-hidden relative">
-          <div id="summary-cards-container" class="space-y-2 pr-1 h-full flex flex-col justify-between">
+          <div id="summary-cards-container" class="h-full flex flex-col justify-between">
             <div class="text-center py-16 text-slate-400 font-extrabold text-lg">Memuat data KBM...</div>
           </div>
         </div>
@@ -825,7 +797,6 @@
       if (fAsrMin === 60) { fAsrDeg += 1; fAsrMin = 0; }
       const asrBox = convertLattice4(fAsrDeg, fAsrMin);
 
-      // Hitung Syuruq (Terbit)
       const syuruqBox = convertLattice4(Math.floor(totalMinLail / 60), totalMinLail % 60);
 
       return {
@@ -858,7 +829,6 @@
     // PAGING KBM RINGKASAN ENGINE
     let summaryPageIndex = 0;
     let summaryPageTimer = null;
-    const ITEMS_PER_PAGE = 7; // Menampilkan 7 Baris Sekaligus agar Penuh
 
     // BREAK MODE STATE
     let isBreakModeActive = false;
@@ -942,7 +912,6 @@
       document.getElementById('time-maghrib').innerText = p.maghrib;
       document.getElementById('time-isya').innerText = p.isya;
 
-      // Update Modal Break Mode Sholat
       const breakSubuh = document.getElementById('break-sholat-subuh');
       if (breakSubuh) breakSubuh.innerText = p.subuh;
       const breakSyuruq = document.getElementById('break-sholat-syuruq');
@@ -956,7 +925,6 @@
       const breakIsya = document.getElementById('break-sholat-isya');
       if (breakIsya) breakIsya.innerText = p.isya;
 
-      // Update Selisih Istiwa vs WIB Realtime
       const diffMs = istiwaNow.getTime() - now.getTime();
       const diffTotalSec = Math.abs(Math.floor(diffMs / 1000));
       const diffMin = Math.floor(diffTotalSec / 60);
@@ -1308,7 +1276,6 @@
       const guruMap = {};
       dataGuruList.forEach(g => { if (g.id_guru) guruMap[g.id_guru] = g; });
 
-      // DAPATKAN KBM AKTIF JAM INI
       let jadwalAktif = jadwalPelajaranList.filter(j => {
         if (cleanDayStr(j.hari) !== hariIniKapital) return false;
         const start = timeToMinutes(j.jam_mulai), end = timeToMinutes(j.jam_selesai);
@@ -1319,7 +1286,6 @@
         guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '', status_guru: '' }
       }));
 
-      // HITUNG SELISIH WAKTU KE KBM SEBELUMNYA ATAU SELANJUTNYA UNTUK HITUNG MUNDUR CLEANER
       let nextKbmStartMinutes = -1;
       const upcomingJadwal = jadwalPelajaranList.filter(j => {
         if (cleanDayStr(j.hari) !== hariIniKapital) return false;
@@ -1331,9 +1297,7 @@
         nextKbmStartMinutes = timeToMinutes(upcomingJadwal[0].jam_mulai);
       }
 
-      // CEK MODE KBM AKTIF VS MODE JAM KOSONG (BREAK MODE)
       if (jadwalAktif.length === 0) {
-        // TAMPILKAN BREAK MODE FULLSCREEN JIKA TIDAK ADA KBM AKTIF
         isIdleTomorrowMode = true;
         const besokIndex = (hariIniIndex + 1) % 7;
         const besokKapital = cleanDayStr(hariList[besokIndex]);
@@ -1348,7 +1312,6 @@
         triggerBreakModeOverlay(nextKbmStartMinutes, menitSekarangIstiwa, istiwaNow.getSeconds());
 
       } else {
-        // JIKA ADA KBM AKTIF, TUTUP BREAK MODE DAN TAMPILKAN DASHBOARD UTAMA
         isIdleTomorrowMode = false;
         activeJadwalList = jadwalAktif;
         dismissBreakModeOverlay();
@@ -1376,9 +1339,6 @@
       renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList);
     }
 
-    // =========================================================================
-    // MODAL FULLSCREEN BREAK MODE ENGINE & ANIMASI PEMBERSIH LAYAR
-    // =========================================================================
     function triggerBreakModeOverlay(nextKbmStartMinutes, menitSekarangIstiwa, detikSekarang) {
       const modal = document.getElementById('modal-break-mode');
       const timerText = document.getElementById('break-next-kbm-timer');
@@ -1400,7 +1360,6 @@
         const s = String(Math.max(0, totalRemainingSec % 60)).padStart(2, '0');
         if (timerText) timerText.innerText = `⏳ KBM Selanjutnya dimulai dalam: ${m}:${s}`;
 
-        // JIKA MENJELANG KBM (DALAM 60 DETIK TERAKHIR), AKTIFKAN ANIMASI MENYAPU / HAPUS LAYAR
         if (totalRemainingSec <= 60 && totalRemainingSec > 0 && !isWipingExit) {
           isWipingExit = true;
           modal.classList.add('wiping-exit');
@@ -1408,7 +1367,7 @@
             modal.classList.remove('flex');
             modal.classList.add('hidden');
             isBreakModeActive = false;
-          }, 1800);
+          }, 1500);
         }
       } else {
         if (timerText) timerText.innerText = `🌙 Tidak ada KBM tersisa hari ini.`;
@@ -1536,13 +1495,14 @@
     }
 
     // =========================================================================
-    // RENDER RINGKASAN KBM 7 BARIS DENGAN ANIMASI TIRAI BAMBU (KIRI & KANAN)
+    // RENDER RINGKASAN KBM SEIMBANG (BALANCED PAGINATION & GPU ACCELERATED)
     // =========================================================================
     function renderSummaryPagedView() {
       const container = document.getElementById('summary-cards-container');
       const badge = document.getElementById('page-indicator-badge');
 
-      if (activeJadwalList.length === 0) {
+      const totalItems = activeJadwalList.length;
+      if (totalItems === 0) {
         badge.innerText = "Hal 0/0";
         container.innerHTML = `
           <div class="flex flex-col items-center justify-center py-12 text-center h-full">
@@ -1554,21 +1514,25 @@
         return;
       }
 
-      const totalPages = Math.ceil(activeJadwalList.length / ITEMS_PER_PAGE);
+      // RUMUS PEMBAGIAN HALAMAN SEIMBANG (MENCEGAH KOLOM KOSONG DI HALAMAN TERAKHIR)
+      const TARGET_MAX_PER_PAGE = 7;
+      const totalPages = Math.ceil(totalItems / TARGET_MAX_PER_PAGE);
+      const itemsPerPage = Math.ceil(totalItems / totalPages);
+
       if (summaryPageIndex >= totalPages) summaryPageIndex = 0;
 
       badge.innerText = `HALAMAN ${summaryPageIndex + 1} DARI ${totalPages}`;
 
-      const startIndex = summaryPageIndex * ITEMS_PER_PAGE;
-      const currentBatch = activeJadwalList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+      const startIndex = summaryPageIndex * itemsPerPage;
+      const currentBatch = activeJadwalList.slice(startIndex, startIndex + itemsPerPage);
 
       const htmlContent = currentBatch.map((j, i) => {
         const statusBadge = getStatusGuruBadge(j.guru.status_guru, true);
         const bgClass = (i % 2 === 0) ? 'bg-white/95' : 'bg-emerald-50/60';
 
-        // Alternasi Animasi Tirai Bambu: Genap Terbuka Dari Kiri, Ganjil Terbuka Dari Kanan
+        // ALTERNASI ANIMASI TIRAI BAMBU RINGAN (GPU HARDWARE ACCELERATED)
         const curtainClass = (i % 2 === 0) ? 'bamboo-row-left' : 'bamboo-row-right';
-        const delaySec = (i * 0.08).toFixed(2);
+        const delaySec = (i * 0.05).toFixed(2);
 
         return `
           <div class="grid grid-cols-12 gap-2 items-center p-2.5 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm transition hover:border-emerald-400 ${curtainClass}" style="animation-delay: ${delaySec}s;">
@@ -1604,7 +1568,7 @@
         `;
       }).join('');
 
-      container.className = "space-y-2 pr-1 h-full flex flex-col justify-between";
+      container.className = "h-full flex flex-col justify-between";
       container.innerHTML = htmlContent;
     }
 
@@ -1612,13 +1576,14 @@
     if (!summaryPageTimer) {
       summaryPageTimer = setInterval(() => {
         if (activeJadwalList.length > 0) {
-          const totalPages = Math.ceil(activeJadwalList.length / ITEMS_PER_PAGE);
+          const TARGET_MAX_PER_PAGE = 7;
+          const totalPages = Math.ceil(activeJadwalList.length / TARGET_MAX_PER_PAGE);
           if (totalPages > 1) {
             summaryPageIndex = (summaryPageIndex + 1) % totalPages;
             renderSummaryPagedView();
           }
         }
-      }, 8000); // 8 Detik Per Halaman
+      }, 8000);
     }
 
     function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
