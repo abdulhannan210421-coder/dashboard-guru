@@ -5,19 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Digital Signage - Jadwal Guru & Waktu Sholat Falak Realtime</title>
 
-  <!-- Tailwind CSS & Font Tulisan Tangan (Kalam & Caveat) -->
+  <!-- Tailwind CSS & Font Clean Modern -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       transition: background-color 0.5s ease, color 0.5s ease;
       user-select: none;
-    }
-
-    .font-handwritten {
-      font-family: 'Kalam', 'Caveat', cursive, sans-serif;
     }
 
     .bg-vibrant {
@@ -41,41 +37,6 @@
       background: rgba(15, 23, 42, 0.82);
       border: 1px solid rgba(255, 255, 255, 0.12);
       box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
-    }
-
-    /* TAMPILAN LEMBARAN KERTAS & TULISAN TANGAN */
-    .paper-sheet {
-      background-color: #fbf8ef;
-      background-image: repeating-linear-gradient(#fbf8ef 0px, #fbf8ef 29px, #e8dfcf 30px);
-      border: 2px solid #d3c7b2;
-      box-shadow: 0 10px 25px -5px rgba(101, 85, 58, 0.15), inset 0 0 40px rgba(220, 205, 180, 0.2);
-    }
-
-    body.dark-mode .paper-sheet {
-      background-color: #1e293b;
-      background-image: repeating-linear-gradient(#1e293b 0px, #1e293b 29px, #334155 30px);
-      border-color: #475569;
-      color: #f8fafc;
-    }
-
-    /* ANIMASI MEMBUKA KERTAS (PAPER UNFOLD) - RINGAN & BEBAS LAG */
-    @keyframes paperUnfold {
-      0% {
-        transform: perspective(600px) rotateX(-25deg) scaleY(0.9);
-        opacity: 0;
-        transform-origin: top center;
-      }
-      100% {
-        transform: perspective(600px) rotateX(0deg) scaleY(1);
-        opacity: 1;
-        transform-origin: top center;
-      }
-    }
-
-    .animate-paper-unfold {
-      animation: paperUnfold 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      will-change: transform, opacity;
-      backface-visibility: hidden;
     }
 
     /* COVERFLOW 3D LEFT PANEL */
@@ -144,19 +105,33 @@
       pointer-events: none;
     }
 
-    /* ANIMASI CLEANER MASCOT */
-    @keyframes cleanerBob {
-      0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-      50% { transform: translate3d(0, -10px, 0) rotate(3deg); }
+    /* ANIMASI ROBOT BERJALAN & MENYAPU REALTIME */
+    @keyframes robotSweepPatrol {
+      0% { transform: translate3d(0, 0, 0) scaleX(1); }
+      48% { transform: translate3d(calc(100vw - 320px), 0, 0) scaleX(1); }
+      50% { transform: translate3d(calc(100vw - 320px), 0, 0) scaleX(-1); }
+      98% { transform: translate3d(0, 0, 0) scaleX(-1); }
+      100% { transform: translate3d(0, 0, 0) scaleX(1); }
+    }
+
+    @keyframes broomWipe {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-25deg); }
+    }
+
+    .animate-robot-patrol {
+      animation: robotSweepPatrol 22s linear infinite;
+      will-change: transform;
+    }
+
+    .animate-broom-action {
+      animation: broomWipe 0.6s ease-in-out infinite;
+      transform-origin: bottom right;
     }
 
     @keyframes screenWipeAction {
       0% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); opacity: 1; }
       100% { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); opacity: 0; }
-    }
-
-    .animate-cleaner {
-      animation: cleanerBob 2.5s ease-in-out infinite;
     }
 
     .wiping-exit {
@@ -173,11 +148,27 @@
       width: max-content;
       animation: marqueeScroll 25s linear infinite;
     }
+
+    /* PROMPTER VERTICAL SCROLL KONTINU (ULTRA SMOOTH GPU) */
+    @keyframes prompterContinuousScroll {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(0, -50%, 0); }
+    }
+
+    .animate-prompter-scroll {
+      animation: prompterContinuousScroll var(--prompter-duration, 30s) linear infinite;
+      will-change: transform;
+      backface-visibility: hidden;
+    }
+
+    .animate-prompter-scroll:hover {
+      animation-play-state: paused;
+    }
   </style>
 </head>
 <body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
 
-  <!-- VIDEO KEEP-ALIVE TV (SIMULASI YOUTUBE ENGINE AGAR TV BEBAS SCREEN SAVER) -->
+  <!-- VIDEO KEEP-ALIVE TV (ENGINE YOUTUBE SIMULATION UNTUK MENCEGAH SLEEP/SCREENSAVER) -->
   <video id="bg-keepalive-video" autoplay loop muted playsinline webkit-playsinline class="fixed inset-0 w-full h-full object-cover z-0 opacity-20 pointer-events-none">
     <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
   </video>
@@ -224,7 +215,7 @@
     </div>
   </div>
 
-  <!-- MODAL BREAK MODE: INFORMASI WAKTU SHOLAT FULLSCREEN & SELISIH ISTIWA -->
+  <!-- MODAL BREAK MODE: JAM ISTIWA & WIB BESAR LENGKAP ROBOT BERJALAN -->
   <div id="modal-break-mode" class="fixed inset-0 bg-gradient-to-br from-emerald-950 via-slate-950 to-teal-950 text-white z-40 hidden flex-col justify-between p-8 overflow-hidden backdrop-blur-xl">
     <div class="flex justify-between items-center border-b border-emerald-500/30 pb-4">
       <div class="flex items-center gap-4">
@@ -243,7 +234,9 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-12 gap-6 my-auto">
+    <!-- MAIN CONTENT BREAK MODE -->
+    <div class="grid grid-cols-12 gap-6 my-auto items-stretch">
+      <!-- KIRI: WEATHER & NEXT KBM TIMER -->
       <div class="col-span-4 bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 flex flex-col justify-between shadow-2xl">
         <div class="flex justify-between items-start">
           <div>
@@ -272,58 +265,66 @@
         </div>
       </div>
 
-      <div class="col-span-8 grid grid-cols-3 gap-4">
-        <div class="bg-white/10 p-5 rounded-3xl border border-white/15 text-center flex flex-col justify-center">
-          <span class="text-xs font-black text-emerald-300 uppercase block tracking-wider mb-1">SUBUH</span>
-          <span id="break-sholat-subuh" class="text-4xl font-black text-white font-mono">--:--</span>
-          <span class="text-[10px] text-slate-400 font-bold mt-1">Istiwa Lokal</span>
+      <!-- KANAN: JAM ISTIWA & WIB BESAR DI ATAS GRID SHOLAT -->
+      <div class="col-span-8 flex flex-col justify-between gap-4">
+        <!-- TAMPILAN JAM ISTIWA & WIB BESAR -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-gradient-to-r from-emerald-900/90 to-teal-900/90 p-4 rounded-3xl border-2 border-emerald-400/60 shadow-xl text-center">
+            <span class="text-xs font-black text-emerald-300 uppercase tracking-widest block mb-1">☀️ JAM ISTIWA LOKAL</span>
+            <div id="break-clock-istiwa" class="text-4xl md:text-5xl font-black text-white font-mono tracking-wider">00:00:00</div>
+          </div>
+
+          <div class="bg-gradient-to-r from-amber-900/90 to-amber-950/90 p-4 rounded-3xl border-2 border-amber-400/60 shadow-xl text-center">
+            <span class="text-xs font-black text-amber-300 uppercase tracking-widest block mb-1">⏰ JAM WIB REALTIME</span>
+            <div id="break-clock-wib" class="text-4xl md:text-5xl font-black text-amber-200 font-mono tracking-wider">00:00:00</div>
+          </div>
         </div>
 
-        <div class="bg-white/10 p-5 rounded-3xl border border-white/15 text-center flex flex-col justify-center">
-          <span class="text-xs font-black text-amber-300 uppercase block tracking-wider mb-1">TERBIT (SYURUQ)</span>
-          <span id="break-sholat-syuruq" class="text-4xl font-black text-white font-mono">--:--</span>
-          <span class="text-[10px] text-slate-400 font-bold mt-1">Istiwa Lokal</span>
-        </div>
+        <!-- GRID WAKTU SHOLAT -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-white/10 p-4 rounded-2xl border border-white/15 text-center">
+            <span class="text-xs font-black text-emerald-300 uppercase block mb-1">SUBUH</span>
+            <span id="break-sholat-subuh" class="text-3xl font-black text-white font-mono">--:--</span>
+          </div>
 
-        <div class="bg-gradient-to-b from-emerald-600/40 to-emerald-800/60 p-5 rounded-3xl border-2 border-emerald-400/60 text-center flex flex-col justify-center shadow-lg shadow-emerald-900/40">
-          <span class="text-xs font-black text-emerald-200 uppercase block tracking-wider mb-1">DZUHUR</span>
-          <span id="break-sholat-dzuhur" class="text-4xl font-black text-white font-mono">12:04</span>
-          <span class="text-[10px] text-emerald-200 font-bold mt-1">Istiwa Lokal</span>
-        </div>
+          <div class="bg-white/10 p-4 rounded-2xl border border-white/15 text-center">
+            <span class="text-xs font-black text-amber-300 uppercase block mb-1">SYURUQ</span>
+            <span id="break-sholat-syuruq" class="text-3xl font-black text-white font-mono">--:--</span>
+          </div>
 
-        <div class="bg-white/10 p-5 rounded-3xl border border-white/15 text-center flex flex-col justify-center">
-          <span class="text-xs font-black text-emerald-300 uppercase block tracking-wider mb-1">ASHAR</span>
-          <span id="break-sholat-ashar" class="text-4xl font-black text-white font-mono">--:--</span>
-          <span class="text-[10px] text-slate-400 font-bold mt-1">Istiwa Lokal</span>
-        </div>
+          <div class="bg-emerald-600/40 p-4 rounded-2xl border-2 border-emerald-400/60 text-center shadow-lg">
+            <span class="text-xs font-black text-emerald-200 uppercase block mb-1">DZUHUR</span>
+            <span id="break-sholat-dzuhur" class="text-3xl font-black text-white font-mono">12:04</span>
+          </div>
 
-        <div class="bg-white/10 p-5 rounded-3xl border border-white/15 text-center flex flex-col justify-center">
-          <span class="text-xs font-black text-emerald-300 uppercase block tracking-wider mb-1">MAGHRIB</span>
-          <span id="break-sholat-maghrib" class="text-4xl font-black text-white font-mono">--:--</span>
-          <span class="text-[10px] text-slate-400 font-bold mt-1">Istiwa Lokal</span>
-        </div>
+          <div class="bg-white/10 p-4 rounded-2xl border border-white/15 text-center">
+            <span class="text-xs font-black text-emerald-300 uppercase block mb-1">ASHAR</span>
+            <span id="break-sholat-ashar" class="text-3xl font-black text-white font-mono">--:--</span>
+          </div>
 
-        <div class="bg-white/10 p-5 rounded-3xl border border-white/15 text-center flex flex-col justify-center">
-          <span class="text-xs font-black text-emerald-300 uppercase block tracking-wider mb-1">ISYA</span>
-          <span id="break-sholat-isya" class="text-4xl font-black text-white font-mono">--:--</span>
-          <span class="text-[10px] text-slate-400 font-bold mt-1">Istiwa Lokal</span>
+          <div class="bg-white/10 p-4 rounded-2xl border border-white/15 text-center">
+            <span class="text-xs font-black text-emerald-300 uppercase block mb-1">MAGHRIB</span>
+            <span id="break-sholat-maghrib" class="text-3xl font-black text-white font-mono">--:--</span>
+          </div>
+
+          <div class="bg-white/10 p-4 rounded-2xl border border-white/15 text-center">
+            <span class="text-xs font-black text-emerald-300 uppercase block mb-1">ISYA</span>
+            <span id="break-sholat-isya" class="text-3xl font-black text-white font-mono">--:--</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="relative border-t border-emerald-500/30 pt-3 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <span class="bg-emerald-500/20 text-emerald-300 font-extrabold text-xs px-3 py-1 rounded-full border border-emerald-400/30">
-          🧹 LAYAR INTERAKTIF PONDOK PESANTREN
-        </span>
-        <span class="text-xs text-slate-300 font-medium">Sistem otomatis menyapu layar sebelum KBM berikutnya dimulai.</span>
-      </div>
-
-      <div id="cleaner-mascot" class="flex items-center gap-3 animate-cleaner bg-white/10 px-5 py-2 rounded-2xl border border-white/20 shadow-xl">
-        <span class="text-3xl">🤖🧹</span>
+    <!-- ROBOT BERJALAN & MENYAPU REALTIME DI FOOTER -->
+    <div class="relative border-t border-emerald-500/30 pt-3 h-14 flex items-center overflow-hidden">
+      <div id="cleaner-mascot" class="animate-robot-patrol absolute left-0 flex items-center gap-3 bg-emerald-900/90 px-4 py-2 rounded-2xl border-2 border-emerald-400 shadow-2xl">
+        <div class="flex items-center gap-1">
+          <span class="text-2xl animate-bounce">🤖</span>
+          <span class="text-2xl animate-broom-action inline-block">🧹</span>
+        </div>
         <div>
-          <span class="text-xs font-black text-amber-300 block">CLEANER ROBOT ACTIVE</span>
-          <span class="text-[10px] text-slate-300">Menyapu tampilan layar secara otomatis...</span>
+          <span class="text-xs font-black text-amber-300 block tracking-wider">CLEANER ROBOT ACTIVE</span>
+          <span class="text-[10px] text-emerald-100 font-semibold">Sedang membersihkan tampilan layar secara otomatis...</span>
         </div>
       </div>
     </div>
@@ -401,30 +402,30 @@
       </div>
     </section>
 
-    <!-- SEKSI KANAN: RINGKASAN KBM KERTAS & TULISAN TANGAN 10 BARIS -->
+    <!-- SEKSI KANAN: RINGKASAN KBM PROMPTER SCROLL (RAPI & BEBAS POTONG) -->
     <section class="col-span-6 flex flex-col h-full overflow-hidden">
       <div class="mb-2 px-2 flex justify-between items-center flex-shrink-0">
         <span id="section-title-right" class="text-xs font-extrabold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
-          <span>📜</span> RINGKASAN KBM AKTIF JAM INI (LEMBARAN KERTAS)
+          <span>📜</span> RINGKASAN KBM AKTIF JAM INI
         </span>
-        <span id="page-indicator-badge" class="text-xs bg-amber-900 text-amber-100 font-handwritten font-bold px-3 py-0.5 rounded-full shadow-sm">
-          Hal 1/1
+        <span class="text-[10px] bg-emerald-800 text-white font-extrabold px-3 py-1 rounded-full tracking-wider uppercase shadow-sm">
+          AUTO SCROLL PROMPTER
         </span>
       </div>
 
-      <div class="paper-sheet rounded-3xl p-3 flex-1 overflow-hidden flex flex-col relative">
-        <!-- HEADER TABEL KERTAS -->
-        <div class="grid grid-cols-12 gap-2 text-sm md:text-base font-handwritten font-bold tracking-wide text-amber-950 border-b-2 border-amber-800/40 pb-1 mb-1 flex-shrink-0 px-2">
+      <div class="glass-card rounded-3xl p-4 flex-1 overflow-hidden border-2 border-white flex flex-col">
+        <!-- HEADER TABEL -->
+        <div class="grid grid-cols-12 gap-3 text-xs font-black uppercase tracking-wider text-emerald-950 border-b-2 border-emerald-200 pb-2.5 mb-2 flex-shrink-0 px-3">
           <div class="col-span-2">KELAS</div>
           <div class="col-span-4">MATA PELAJARAN</div>
           <div class="col-span-4">GURU PENGAJAR</div>
           <div class="col-span-2 text-right">RUANG</div>
         </div>
 
-        <!-- CONTAINER TABEL (PAS 10 BARIS) -->
+        <!-- CONTAINER PROMPTER SCROLL SANGAT HALUS -->
         <div class="flex-1 overflow-hidden relative">
-          <div id="summary-cards-container" class="h-full flex flex-col justify-between">
-            <div class="text-center py-16 text-amber-800/60 font-handwritten text-xl">Memuat lembaran KBM...</div>
+          <div id="summary-cards-container" class="w-full">
+            <div class="text-center py-16 text-slate-400 font-extrabold text-lg">Memuat data KBM...</div>
           </div>
         </div>
       </div>
@@ -785,9 +786,6 @@
     let adzanActive = false;
     let lastAdzanTriggeredTime = "";
 
-    let summaryPageIndex = 0;
-    let summaryPageTimer = null;
-
     let isBreakModeActive = false;
     let isWipingExit = false;
 
@@ -1113,9 +1111,9 @@
     function getStatusGuruBadge(statusGuru, isTableSummary = false) {
       const st = (statusGuru || '').toString().trim().toUpperCase();
       if (isTableSummary) {
-        if (st.includes('WALI')) return `<span class="bg-amber-200/90 text-amber-950 font-handwritten text-xs px-2 py-0.5 rounded border border-amber-400">★ WALI KELAS</span>`;
-        if (st.includes('FAN')) return `<span class="bg-teal-200/90 text-teal-950 font-handwritten text-xs px-2 py-0.5 rounded border border-teal-400">● FAN</span>`;
-        return `<span class="bg-amber-100 text-amber-900 font-handwritten text-xs px-2 py-0.5 rounded border border-amber-300">${st || 'GURU'}</span>`;
+        if (st.includes('WALI')) return `<span class="bg-amber-100 text-amber-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-amber-300">★ WALI KELAS</span>`;
+        if (st.includes('FAN')) return `<span class="bg-teal-100 text-teal-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-teal-300">● FAN</span>`;
+        return `<span class="bg-emerald-100 text-emerald-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-emerald-300">${st || 'GURU'}</span>`;
       } else {
         if (st.includes('WALI')) return `<span class="bg-amber-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-amber-300">★ WALI KELAS</span>`;
         if (st.includes('FAN')) return `<span class="bg-teal-700 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-teal-400">● FAN</span>`;
@@ -1152,10 +1150,23 @@
       const now = new Date();
       const istiwaNow = getIstiwaTime(now);
 
-      const jam = String(istiwaNow.getHours()).padStart(2, '0');
-      const menit = String(istiwaNow.getMinutes()).padStart(2, '0');
-      const detik = String(istiwaNow.getSeconds()).padStart(2, '0');
-      document.getElementById('live-clock').innerText = `${jam}:${menit}:${detik}`;
+      const jamIstiwa = String(istiwaNow.getHours()).padStart(2, '0');
+      const menitIstiwa = String(istiwaNow.getMinutes()).padStart(2, '0');
+      const detikIstiwa = String(istiwaNow.getSeconds()).padStart(2, '0');
+      const timeIstiwaStr = `${jamIstiwa}:${menitIstiwa}:${detikIstiwa}`;
+
+      const jamWIB = String(now.getHours()).padStart(2, '0');
+      const menitWIB = String(now.getMinutes()).padStart(2, '0');
+      const detikWIB = String(now.getSeconds()).padStart(2, '0');
+      const timeWIBStr = `${jamWIB}:${menitWIB}:${detikWIB}`;
+
+      document.getElementById('live-clock').innerText = timeIstiwaStr;
+
+      const breakIstiwaEl = document.getElementById('break-clock-istiwa');
+      if (breakIstiwaEl) breakIstiwaEl.innerText = timeIstiwaStr;
+
+      const breakWIBEl = document.getElementById('break-clock-wib');
+      if (breakWIBEl) breakWIBEl.innerText = timeWIBStr;
 
       const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
       const bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -1168,9 +1179,9 @@
       updateHeaderPrayerRibbon();
 
       const targetHours = ["00", "06", "12", "18"];
-      if (targetHours.includes(jam) && menit === "00" && detik === "05") {
-        if (lastReloadHour !== jam) {
-          lastReloadHour = jam;
+      if (targetHours.includes(jamIstiwa) && menitIstiwa === "00" && detikIstiwa === "05") {
+        if (lastReloadHour !== jamIstiwa) {
+          lastReloadHour = jamIstiwa;
           window.location.reload();
         }
       }
@@ -1274,14 +1285,13 @@
         dismissBreakModeOverlay();
 
         document.getElementById('section-title-left').innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping"></span> SOROTAN GURU MENGAJAR (LIVE COVER FLOW)`;
-        document.getElementById('section-title-right').innerHTML = `<span>📜</span> RINGKASAN KBM AKTIF JAM INI (LEMBARAN KERTAS)`;
+        document.getElementById('section-title-right').innerHTML = `<span>📜</span> RINGKASAN KBM AKTIF JAM INI`;
       }
 
       const currentKey = activeJadwalList.map(item => item.id_guru + item.kelas + item.jam_mulai).join('|') + `_${isIdleTomorrowMode}`;
 
       if (lastSummaryKey !== currentKey) {
-        summaryPageIndex = 0;
-        renderSummaryPagedView();
+        renderSummaryPrompterView();
         lastSummaryKey = currentKey;
       }
 
@@ -1452,84 +1462,73 @@
     }
 
     // =========================================================================
-    // RENDER RINGKASAN KBM 10 BARIS PAS DENGAN ANIMASI MEMBUKA KERTAS (PAPER UNFOLD)
+    // RENDER RINGKASAN KBM PROMPTER SCROLL (RAPI, PADAT & BEBAS LAG)
     // =========================================================================
-    function renderSummaryPagedView() {
+    function renderSummaryPrompterView() {
       const container = document.getElementById('summary-cards-container');
-      const badge = document.getElementById('page-indicator-badge');
 
-      const totalItems = activeJadwalList.length;
-      if (totalItems === 0) {
-        badge.innerText = "Hal 0/0";
+      if (activeJadwalList.length === 0) {
         container.innerHTML = `
-          <div class="flex flex-col items-center justify-center py-12 text-center h-full">
+          <div class="flex flex-col items-center justify-center py-16 text-center">
             <div class="text-5xl mb-3">📖</div>
-            <h4 class="font-bold font-handwritten text-amber-900 text-xl mb-1">Tidak Ada KBM Aktif</h4>
-            <p class="text-sm font-handwritten text-amber-800/80 max-w-xs">Seluruh santri dan ustadz dapat memanfaatkan waktu untuk ibadah atau istirahat.</p>
+            <h4 class="font-extrabold text-slate-700 text-base mb-1">Tidak Ada KBM Aktif</h4>
+            <p class="text-xs text-slate-400 max-w-xs">Seluruh santri dan ustadz dapat memanfaatkan waktu untuk ibadah atau istirahat.</p>
           </div>
         `;
         return;
       }
 
-      // KONSISTEN PAS 10 BARIS PER LEMBAR KERTAS
-      const ITEMS_PER_SHEET = 10;
-      const totalPages = Math.ceil(totalItems / ITEMS_PER_SHEET);
-
-      if (summaryPageIndex >= totalPages) summaryPageIndex = 0;
-
-      badge.innerText = `HALAMAN ${summaryPageIndex + 1} DARI ${totalPages}`;
-
-      const startIndex = summaryPageIndex * ITEMS_PER_SHEET;
-      const currentBatch = activeJadwalList.slice(startIndex, startIndex + ITEMS_PER_SHEET);
-
-      const rowsHtml = currentBatch.map((j, i) => {
+      // RENDER TEMPLATE SINGLE ROW
+      const buildRow = (j, i) => {
         const statusBadge = getStatusGuruBadge(j.guru.status_guru, true);
+        const bgClass = (i % 2 === 0) ? 'bg-white/95' : 'bg-emerald-50/70';
 
         return `
-          <div class="grid grid-cols-12 gap-2 items-center py-1 px-2 border-b border-amber-800/20 font-handwritten hover:bg-amber-100/50 transition">
+          <div class="grid grid-cols-12 gap-3 items-center py-2.5 px-3 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm mb-2">
             <div class="col-span-2">
-              <span class="bg-amber-900/90 text-amber-50 font-bold text-xs md:text-sm px-2 py-0.5 rounded shadow-sm inline-block text-center w-full">
+              <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-xs md:text-sm px-2 py-1.5 rounded-xl shadow-md inline-block text-center w-full">
                 ${j.kelas || '-'}
               </span>
             </div>
 
             <div class="col-span-4 pl-1">
-              <h3 class="font-bold text-amber-950 text-sm md:text-base leading-none truncate">
+              <h3 class="font-extrabold text-slate-900 text-xs md:text-sm leading-snug">
                 ${j.mapel || '-'}
               </h3>
+              <span class="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block">Mata Pelajaran</span>
             </div>
 
-            <div class="col-span-4 flex items-center justify-between gap-1 pr-2 truncate">
-              <span class="font-bold text-amber-950 text-xs md:text-sm truncate">${j.guru.nama_guru || j.id_guru}</span>
-              ${statusBadge}
+            <div class="col-span-4">
+              <div class="font-bold text-slate-800 text-xs leading-tight mb-1">${j.guru.nama_guru || j.id_guru}</div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                ${statusBadge}
+                <span class="text-[9px] text-slate-400 font-mono font-bold">(${j.jam_mulai}-${j.jam_selesai})</span>
+              </div>
             </div>
 
             <div class="col-span-2 text-right">
-              <span class="bg-amber-200/80 text-amber-950 font-bold text-xs px-2 py-0.5 rounded border border-amber-400 inline-block">
+              <span class="bg-emerald-100 text-emerald-900 font-black text-xs px-2.5 py-1.5 rounded-xl border border-emerald-300 inline-block">
                 ${j.ruang || '-'}
               </span>
             </div>
           </div>
         `;
-      }).join('');
+      };
 
-      // ANIMASI MEMBUKA KERTAS (PAPER UNFOLD) GPU ACCELERATED
-      container.className = "h-full flex flex-col justify-between";
-      container.innerHTML = `<div class="h-full flex flex-col justify-between animate-paper-unfold">${rowsHtml}</div>`;
-    }
+      const rowsOriginal = activeJadwalList.map((j, i) => buildRow(j, i)).join('');
 
-    // TIMER PERGANTIAN HALAMAN KERTAS (7 DETIK PER LEMBAR)
-    if (!summaryPageTimer) {
-      summaryPageTimer = setInterval(() => {
-        if (activeJadwalList.length > 0) {
-          const ITEMS_PER_SHEET = 10;
-          const totalPages = Math.ceil(activeJadwalList.length / ITEMS_PER_SHEET);
-          if (totalPages > 1) {
-            summaryPageIndex = (summaryPageIndex + 1) % totalPages;
-            renderSummaryPagedView();
-          }
-        }
-      }, 7000);
+      // JIKA ELEMEN CUKUP BANYAK (> 4), DUPLIKASI LIST UNTUK INFINITE CONTINUOUS PROMPTER SCROLL
+      let finalContent = rowsOriginal;
+      if (activeJadwalList.length > 3) {
+        finalContent = rowsOriginal + rowsOriginal;
+        const scrollDuration = Math.max(18, activeJadwalList.length * 4.5);
+        container.style.setProperty('--prompter-duration', `${scrollDuration}s`);
+        container.className = "animate-prompter-scroll w-full";
+      } else {
+        container.className = "w-full";
+      }
+
+      container.innerHTML = finalContent;
     }
 
     function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
