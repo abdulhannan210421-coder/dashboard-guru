@@ -69,8 +69,7 @@
       width: 86%;
       max-width: 490px;
       transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), 
-                  opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), 
-                  filter 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+                  opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1);
       transform-style: preserve-3d;
       border-radius: 1.75rem;
       padding: 1.5rem 1.75rem;
@@ -125,43 +124,26 @@
     }
 
     /* ========================================================================= */
-    /* ANIMASI TIRAI BAMBU RINGAN & RENDER GPU ULTRA SMOOTH                      */
+    /* ANIMASI SCROLL / SLIDE PER KELOMPOK (RINGAN, LANTJAR & BEBAS LAG DI TV)   */
     /* ========================================================================= */
-    @keyframes bambooCurtainLeft {
+    @keyframes groupSlideUp {
       0% {
-        transform: translate3d(-60px, 0, 0) scaleX(0.85);
         opacity: 0;
+        transform: translate3d(0, 35px, 0);
       }
       100% {
-        transform: translate3d(0, 0, 0) scaleX(1);
         opacity: 1;
+        transform: translate3d(0, 0, 0);
       }
     }
 
-    @keyframes bambooCurtainRight {
-      0% {
-        transform: translate3d(60px, 0, 0) scaleX(0.85);
-        opacity: 0;
-      }
-      100% {
-        transform: translate3d(0, 0, 0) scaleX(1);
-        opacity: 1;
-      }
-    }
-
-    .bamboo-row-left {
-      animation: bambooCurtainLeft 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .group-slide-animation {
+      animation: groupSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       will-change: transform, opacity;
       backface-visibility: hidden;
     }
 
-    .bamboo-row-right {
-      animation: bambooCurtainRight 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      will-change: transform, opacity;
-      backface-visibility: hidden;
-    }
-
-    /* ANIMASI CLEANER MASCOT / WIPER ANIMATION */
+    /* ANIMASI CLEANER MASCOT */
     @keyframes cleanerBob {
       0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
       50% { transform: translate3d(0, -10px, 0) rotate(3deg); }
@@ -200,9 +182,7 @@
 </head>
 <body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
 
-  <!-- ========================================================================= -->
-  <!-- ELEMEN VIDEO KEEP-ALIVE TV (DENGAN ENGINE YOUTUBE SIMULATION)             -->
-  <!-- ========================================================================= -->
+  <!-- VIDEO KEEP-ALIVE TV (DENGAN ENGINE YOUTUBE SIMULATION) -->
   <video id="bg-keepalive-video" autoplay loop muted playsinline webkit-playsinline class="fixed inset-0 w-full h-full object-cover z-0 opacity-20 pointer-events-none">
     <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
   </video>
@@ -249,12 +229,8 @@
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL BREAK MODE: INFORMASI WAKTU SHOLAT FULLSCREEN & SELISIH ISTIWA     -->
-  <!-- ========================================================================= -->
+  <!-- MODAL BREAK MODE: INFORMASI WAKTU SHOLAT FULLSCREEN & SELISIH ISTIWA -->
   <div id="modal-break-mode" class="fixed inset-0 bg-gradient-to-br from-emerald-950 via-slate-950 to-teal-950 text-white z-40 hidden flex-col justify-between p-8 overflow-hidden backdrop-blur-xl">
-    
-    <!-- HEADER BREAK MODE -->
     <div class="flex justify-between items-center border-b border-emerald-500/30 pb-4">
       <div class="flex items-center gap-4">
         <div class="bg-emerald-500/20 p-2.5 rounded-2xl border border-emerald-400/30">
@@ -266,17 +242,13 @@
         </div>
       </div>
 
-      <!-- SELISIH ISTIWA VS WIB -->
       <div class="bg-gradient-to-r from-amber-500/20 to-amber-600/30 border-2 border-amber-400/60 p-3 px-6 rounded-2xl text-right">
         <span class="text-[11px] font-extrabold uppercase tracking-widest text-amber-300 block">📊 SELISIH ISTIWA DENGAN WIB REALTIME</span>
         <div id="break-time-diff" class="text-xl font-black text-white font-mono">+18 Menit 24 Detik</div>
       </div>
     </div>
 
-    <!-- MIDDLE: CARDS SHOLAT ISTIWA LENGKAP & CUACA DETAIL -->
     <div class="grid grid-cols-12 gap-6 my-auto">
-      
-      <!-- KIRI: CUACA REALTIME DETAIL -->
       <div class="col-span-4 bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 flex flex-col justify-between shadow-2xl">
         <div class="flex justify-between items-start">
           <div>
@@ -305,7 +277,6 @@
         </div>
       </div>
 
-      <!-- KANAN: WAKTU SHOLAT LENGKAP -->
       <div class="col-span-8 grid grid-cols-3 gap-4">
         <div class="bg-white/10 p-5 rounded-3xl border border-white/15 text-center flex flex-col justify-center">
           <span class="text-xs font-black text-emerald-300 uppercase block tracking-wider mb-1">SUBUH</span>
@@ -343,10 +314,8 @@
           <span class="text-[10px] text-slate-400 font-bold mt-1">Istiwa Lokal</span>
         </div>
       </div>
-
     </div>
 
-    <!-- FOOTER BREAK MODE & KARAKTER ANIMASI PEMBERSIH LAYAR (SCREEN CLEANER) -->
     <div class="relative border-t border-emerald-500/30 pt-3 flex justify-between items-center">
       <div class="flex items-center gap-3">
         <span class="bg-emerald-500/20 text-emerald-300 font-extrabold text-xs px-3 py-1 rounded-full border border-emerald-400/30">
@@ -355,7 +324,6 @@
         <span class="text-xs text-slate-300 font-medium">Sistem otomatis menyapu layar sebelum KBM berikutnya dimulai.</span>
       </div>
 
-      <!-- KARAKTER KARTUN BOT PEMBERSIH DENGAN SQUEEGEE/PEMBERSIH KACA -->
       <div id="cleaner-mascot" class="flex items-center gap-3 animate-cleaner bg-white/10 px-5 py-2 rounded-2xl border border-white/20 shadow-xl">
         <span class="text-3xl">🤖🧹</span>
         <div>
@@ -438,7 +406,7 @@
       </div>
     </section>
 
-    <!-- SEKSI KANAN: RINGKASAN KBM DENGAN ANIMASI TIRAI BAMBU -->
+    <!-- SEKSI KANAN: RINGKASAN KBM DENGAN ANIMASI SCROLL KELOMPOK -->
     <section class="col-span-6 flex flex-col h-full overflow-hidden">
       <div class="mb-2 px-2 flex justify-between items-center flex-shrink-0">
         <span id="section-title-right" class="text-xs font-extrabold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -458,7 +426,7 @@
           <div class="col-span-2 text-right">RUANG</div>
         </div>
 
-        <!-- CONTAINER BARIS GURU (AUTOMATIC BALANCED HEIGHT) -->
+        <!-- CONTAINER BARIS GURU (LAYOUT PAS DENGAN PADDING PADAT) -->
         <div class="flex-1 overflow-hidden relative">
           <div id="summary-cards-container" class="h-full flex flex-col justify-between">
             <div class="text-center py-16 text-slate-400 font-extrabold text-lg">Memuat data KBM...</div>
@@ -483,7 +451,6 @@
 
   <!-- JAVASCRIPT SYSTEM -->
   <script>
-    // SAFE ERROR GUARD
     window.onerror = function(message) {
       console.warn("Minor Error terdeteksi di TV (Diabaikan):", message);
       return true;
@@ -497,9 +464,7 @@
       fetchData();
     });
 
-    // =========================================================================
-    // YOUTUBE-STYLE KEEP-ALIVE ENGINE (MENCEGAH SCREEN SAVER SMART TV 24/7)
-    // =========================================================================
+    // KEEP-ALIVE ENGINE
     let wakeLock = null;
 
     async function requestWakeLock() {
@@ -558,7 +523,6 @@
       }
     });
 
-    // INTERAKSI REMOTE/TOUCH UNTUK UNLOCK AUDIO & FULLSCREEN
     let audioUnlocked = false;
     function handleTVInteraction() {
       requestWakeLock();
@@ -826,11 +790,9 @@
     let adzanActive = false;
     let lastAdzanTriggeredTime = "";
 
-    // PAGING KBM RINGKASAN ENGINE
     let summaryPageIndex = 0;
     let summaryPageTimer = null;
 
-    // BREAK MODE STATE
     let isBreakModeActive = false;
     let isWipingExit = false;
 
@@ -1495,7 +1457,7 @@
     }
 
     // =========================================================================
-    // RENDER RINGKASAN KBM SEIMBANG (BALANCED PAGINATION & GPU ACCELERATED)
+    // RENDER RINGKASAN KBM SCROLL PER KELOMPOK (SANGAT SMOOTH & PENUH 6 BARIS)
     // =========================================================================
     function renderSummaryPagedView() {
       const container = document.getElementById('summary-cards-container');
@@ -1514,30 +1476,25 @@
         return;
       }
 
-      // RUMUS PEMBAGIAN HALAMAN SEIMBANG (MENCEGAH KOLOM KOSONG DI HALAMAN TERAKHIR)
-      const TARGET_MAX_PER_PAGE = 7;
-      const totalPages = Math.ceil(totalItems / TARGET_MAX_PER_PAGE);
-      const itemsPerPage = Math.ceil(totalItems / totalPages);
+      // KONSISTEN 6 BARIS PER KELOMPOK UNTUK MENGISI SELURUH TINGGI LAYAR
+      const ITEMS_PER_GROUP = 6;
+      const totalPages = Math.ceil(totalItems / ITEMS_PER_GROUP);
 
       if (summaryPageIndex >= totalPages) summaryPageIndex = 0;
 
       badge.innerText = `HALAMAN ${summaryPageIndex + 1} DARI ${totalPages}`;
 
-      const startIndex = summaryPageIndex * itemsPerPage;
-      const currentBatch = activeJadwalList.slice(startIndex, startIndex + itemsPerPage);
+      const startIndex = summaryPageIndex * ITEMS_PER_GROUP;
+      const currentBatch = activeJadwalList.slice(startIndex, startIndex + ITEMS_PER_GROUP);
 
-      const htmlContent = currentBatch.map((j, i) => {
+      const rowsHtml = currentBatch.map((j, i) => {
         const statusBadge = getStatusGuruBadge(j.guru.status_guru, true);
-        const bgClass = (i % 2 === 0) ? 'bg-white/95' : 'bg-emerald-50/60';
-
-        // ALTERNASI ANIMASI TIRAI BAMBU RINGAN (GPU HARDWARE ACCELERATED)
-        const curtainClass = (i % 2 === 0) ? 'bamboo-row-left' : 'bamboo-row-right';
-        const delaySec = (i * 0.05).toFixed(2);
+        const bgClass = (i % 2 === 0) ? 'bg-white/95' : 'bg-emerald-50/70';
 
         return `
-          <div class="grid grid-cols-12 gap-2 items-center p-2.5 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm transition hover:border-emerald-400 ${curtainClass}" style="animation-delay: ${delaySec}s;">
+          <div class="grid grid-cols-12 gap-2 items-center py-3 px-3.5 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm transition">
             <div class="col-span-2">
-              <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-xs md:text-sm px-2 py-1 rounded-xl shadow-md shadow-emerald-900/15 inline-block text-center w-full">
+              <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-xs md:text-sm px-2 py-1.5 rounded-xl shadow-md inline-block text-center w-full">
                 ${j.kelas || '-'}
               </span>
             </div>
@@ -1560,7 +1517,7 @@
             </div>
 
             <div class="col-span-2 text-right">
-              <span class="bg-emerald-100 text-emerald-900 font-black text-xs px-2 py-1 rounded-xl border border-emerald-300 inline-block">
+              <span class="bg-emerald-100 text-emerald-900 font-black text-xs px-2.5 py-1.5 rounded-xl border border-emerald-300 inline-block">
                 ${j.ruang || '-'}
               </span>
             </div>
@@ -1568,22 +1525,23 @@
         `;
       }).join('');
 
+      // PEMBUNGKUS ANGKAT SATU KELOMPOK SEKALIGUS (GPU SLIDE UP ANIMATION)
       container.className = "h-full flex flex-col justify-between";
-      container.innerHTML = htmlContent;
+      container.innerHTML = `<div class="h-full flex flex-col justify-between group-slide-animation">${rowsHtml}</div>`;
     }
 
-    // Timer Pergantian Halaman KBM (Setiap 8 Detik)
+    // TIMER PERGANTIAN KELOMPOK (BERHENTI BEBERAPA SAAT SEBELUM SCROLL KELOMPOK BERIKUTNYA)
     if (!summaryPageTimer) {
       summaryPageTimer = setInterval(() => {
         if (activeJadwalList.length > 0) {
-          const TARGET_MAX_PER_PAGE = 7;
-          const totalPages = Math.ceil(activeJadwalList.length / TARGET_MAX_PER_PAGE);
+          const ITEMS_PER_GROUP = 6;
+          const totalPages = Math.ceil(activeJadwalList.length / ITEMS_PER_GROUP);
           if (totalPages > 1) {
             summaryPageIndex = (summaryPageIndex + 1) % totalPages;
             renderSummaryPagedView();
           }
         }
-      }, 8000);
+      }, 7000); // Berhenti selama 7 detik per kelompok
     }
 
     function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
