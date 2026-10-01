@@ -53,6 +53,7 @@
       border-color: rgba(255, 255, 255, 0.1) !important;
     }
 
+    /* COVERFLOW 3D LEFT PANEL */
     .coverflow-container {
       perspective: 1200px;
       display: flex;
@@ -128,25 +129,23 @@
       pointer-events: none;
     }
 
-    .teleprompter-wrapper {
-      position: relative;
-      overflow: hidden;
-      height: 100%;
+    /* ANIMASI MODERN UNTUK TRANSISI HALAMAN KBM (RIGHT PANEL) */
+    @keyframes pageFadeSlide {
+      0% {
+        opacity: 0;
+        transform: translateY(18px) scale(0.98);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
-    .teleprompter-content {
-      animation: teleprompterScroll 36s linear infinite;
+    .animate-page-change {
+      animation: pageFadeSlide 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    .teleprompter-content:hover {
-      animation-play-state: paused;
-    }
-
-    @keyframes teleprompterScroll {
-      0% { transform: translateY(0%); }
-      100% { transform: translateY(-50%); }
-    }
-
+    /* FOOTER MARQUEE TICKER */
     @keyframes marqueeScroll {
       0% { transform: translateX(100%); }
       100% { transform: translateX(-100%); }
@@ -265,6 +264,7 @@
 
   <!-- KONTEN UTAMA -->
   <main class="grid grid-cols-12 gap-5 flex-1 min-h-0 mb-4 overflow-hidden relative z-10">
+    <!-- SEKSI KIRI: COVER FLOW 3D -->
     <section class="col-span-6 flex flex-col h-full overflow-hidden">
       <div class="flex justify-between items-center mb-2 px-2 flex-shrink-0">
         <span id="section-title-left" class="text-xs font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
@@ -280,15 +280,19 @@
       </div>
     </section>
 
+    <!-- SEKSI KANAN: RINGKASAN KBM HALAMAN STATIS (SWAP SLIDE) -->
     <section class="col-span-6 flex flex-col h-full overflow-hidden">
       <div class="mb-2 px-2 flex justify-between items-center flex-shrink-0">
         <span id="section-title-right" class="text-xs font-extrabold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
           <span>📜</span> RINGKASAN KBM AKTIF JAM INI
         </span>
-        <span class="text-[10px] bg-emerald-800 text-white font-extrabold px-2.5 py-0.5 rounded-full tracking-wider uppercase shadow-sm">Auto-Scroll</span>
+        <span id="page-indicator-badge" class="text-[10px] bg-emerald-800 text-white font-extrabold px-3 py-1 rounded-full tracking-wider uppercase shadow-sm">
+          Hal 1/1
+        </span>
       </div>
 
       <div class="glass-card rounded-3xl p-4 flex-1 overflow-hidden border-2 border-white flex flex-col">
+        <!-- HEADER TABEL -->
         <div class="grid grid-cols-12 gap-2 text-xs font-black uppercase tracking-wider text-emerald-900 border-b-2 border-emerald-200 pb-2 mb-3 flex-shrink-0 px-2">
           <div class="col-span-2">KELAS</div>
           <div class="col-span-4">MATA PELAJARAN</div>
@@ -296,9 +300,10 @@
           <div class="col-span-2 text-right">RUANG</div>
         </div>
 
-        <div class="teleprompter-wrapper flex-1">
-          <div id="teleprompter-track" class="teleprompter-content space-y-2.5 pr-1">
-            <div class="text-center py-16 text-slate-400 font-extrabold text-lg">Memuat teleprompter...</div>
+        <!-- CONTAINER BARIS GURU (PER HALAMAN DIAM 8 DETIK) -->
+        <div class="flex-1 overflow-hidden relative">
+          <div id="summary-cards-container" class="space-y-2.5 pr-1 h-full flex flex-col justify-start">
+            <div class="text-center py-16 text-slate-400 font-extrabold text-lg">Memuat data KBM...</div>
           </div>
         </div>
       </div>
@@ -339,7 +344,6 @@
     // =========================================================================
     let wakeLock = null;
 
-    // 1. Kunci Layar dengan Screen Wake Lock API (Protokol Resmi Browser)
     async function requestWakeLock() {
       try {
         if ('wakeLock' in navigator) {
@@ -350,7 +354,6 @@
       }
     }
 
-    // 2. Trik YouTube: Buat Video Stream Canva Internal (100% Offline & Anti-Lag)
     function initYouTubeStyleKeepAlive() {
       const bgVideo = document.getElementById('bg-keepalive-video');
 
@@ -361,16 +364,14 @@
         const ctx = canvas.getContext('2d');
         let toggle = false;
 
-        // Ubah pixel canvas secara terus menerus agar membuat frame video nyata
         setInterval(() => {
           ctx.fillStyle = toggle ? '#022c22' : '#064e3b';
           ctx.fillRect(0, 0, 16, 16);
           toggle = !toggle;
         }, 1000);
 
-        // Ubah canvas menjadi Aliran Video Stream Kamera/Media Player
         if (canvas.captureStream && bgVideo) {
-          const stream = canvas.captureStream(25); // 25 FPS Video Stream
+          const stream = canvas.captureStream(25);
           bgVideo.srcObject = stream;
           bgVideo.play().catch(() => {});
         }
@@ -378,7 +379,6 @@
         console.warn("MediaStream Video Engine Fallback:", e);
       }
 
-      // Auto-Recovery Check: Setiap 2 detik pastikan video & wakeLock tetap menyala
       setInterval(() => {
         if (bgVideo && (bgVideo.paused || bgVideo.ended)) {
           bgVideo.play().catch(() => {});
@@ -400,7 +400,7 @@
       }
     });
 
-    // INTERAKSI REMOTE/TOUCH UNTUK UNLOCK AUDIO & FULLSCREEN & RE-PLAY VIDEO
+    // INTERAKSI REMOTE/TOUCH UNTUK UNLOCK AUDIO & FULLSCREEN
     let audioUnlocked = false;
     function handleTVInteraction() {
       requestWakeLock();
@@ -659,11 +659,16 @@
     let isIdleTomorrowMode = false;
     let coverflowTimer = null;
     let lastRenderedKey = "";
-    let lastTeleprompterKey = "";
+    let lastSummaryKey = "";
     let lastReloadHour = "";
     let preAdzanActive = false;
     let adzanActive = false;
     let lastAdzanTriggeredTime = "";
+
+    // PAGING KBM RINGKASAN ENGINE
+    let summaryPageIndex = 0;
+    let summaryPageTimer = null;
+    const ITEMS_PER_PAGE = 5; // Tampilkan 5 baris guru sekaligus secara diam
 
     function cleanDayStr(val) {
       return String(val || '').trim().toUpperCase().replace(/[^A-Z]/g, '');
@@ -955,12 +960,12 @@
       return url;
     }
 
-    function getStatusGuruBadge(statusGuru, isTeleprompter = false) {
+    function getStatusGuruBadge(statusGuru, isTableSummary = false) {
       const st = (statusGuru || '').toString().trim().toUpperCase();
-      if (isTeleprompter) {
-        if (st.includes('WALI')) return `<span class="bg-amber-100 text-amber-900 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-amber-300">★ WALI KELAS</span>`;
-        if (st.includes('FAN')) return `<span class="bg-teal-100 text-teal-900 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-teal-300">● FAN</span>`;
-        return `<span class="bg-emerald-100 text-emerald-900 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-emerald-300">${st || 'GURU'}</span>`;
+      if (isTableSummary) {
+        if (st.includes('WALI')) return `<span class="bg-amber-100 text-amber-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-amber-300">★ WALI KELAS</span>`;
+        if (st.includes('FAN')) return `<span class="bg-teal-100 text-teal-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-teal-300">● FAN</span>`;
+        return `<span class="bg-emerald-100 text-emerald-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-emerald-300">${st || 'GURU'}</span>`;
       } else {
         if (st.includes('WALI')) return `<span class="bg-amber-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-amber-300">★ WALI KELAS</span>`;
         if (st.includes('FAN')) return `<span class="bg-teal-700 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-teal-400">● FAN</span>`;
@@ -1097,7 +1102,7 @@
         }));
 
         if (activeJadwalList.length > 0) {
-          document.getElementById('section-title-left').innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span> ☀️ PRINJAU JADWAL KBM BESOK (${hariList[besokIndex]})`;
+          document.getElementById('section-title-left').innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span> ☀️ PRATINJAU JADWAL KBM BESOK (${hariList[besokIndex]})`;
           document.getElementById('section-title-right').innerHTML = `<span>📜</span> AGENDA KBM HARI ESOK (${hariList[besokIndex]})`;
         } else {
           document.getElementById('section-title-left').innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span> 🌙 MODE PEMANTAUAN WAKTU ISTIWA`;
@@ -1112,9 +1117,10 @@
 
       const currentKey = activeJadwalList.map(item => item.id_guru + item.kelas + item.jam_mulai).join('|') + `_${isIdleTomorrowMode}`;
 
-      if (lastTeleprompterKey !== currentKey) {
-        renderTeleprompter();
-        lastTeleprompterKey = currentKey;
+      if (lastSummaryKey !== currentKey) {
+        summaryPageIndex = 0;
+        renderSummaryPagedView();
+        lastSummaryKey = currentKey;
       }
 
       if (lastRenderedKey !== currentKey) {
@@ -1237,12 +1243,18 @@
       }, 4000);
     }
 
-    function renderTeleprompter() {
-      const track = document.getElementById('teleprompter-track');
+    // =========================================================================
+    // RENDER RINGKASAN KBM MODE STATIS DENGAN TRANSISI FADE-SLIDE PER HALAMAN
+    // =========================================================================
+    function renderSummaryPagedView() {
+      const container = document.getElementById('summary-cards-container');
+      const badge = document.getElementById('page-indicator-badge');
+
       if (activeJadwalList.length === 0) {
-        track.innerHTML = `
-          <div class="flex flex-col items-center justify-center py-12 text-center">
-            <div class="text-4xl mb-3">📖</div>
+        badge.innerText = "Hal 0/0";
+        container.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-12 text-center h-full">
+            <div class="text-5xl mb-3">📖</div>
             <h4 class="font-extrabold text-slate-700 text-base mb-1">Tidak Ada KBM Aktif</h4>
             <p class="text-xs text-slate-400 max-w-xs">Seluruh santri dan ustadz dapat memanfaatkan waktu untuk ibadah atau istirahat.</p>
           </div>
@@ -1250,45 +1262,68 @@
         return;
       }
 
-      const listToRender = [...activeJadwalList, ...activeJadwalList];
+      const totalPages = Math.ceil(activeJadwalList.length / ITEMS_PER_PAGE);
+      if (summaryPageIndex >= totalPages) summaryPageIndex = 0;
 
-      track.innerHTML = listToRender.map((j, i) => {
+      badge.innerText = `HALAMAN ${summaryPageIndex + 1} DARI ${totalPages}`;
+
+      const startIndex = summaryPageIndex * ITEMS_PER_PAGE;
+      const currentBatch = activeJadwalList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+      const htmlContent = currentBatch.map((j, i) => {
         const statusBadge = getStatusGuruBadge(j.guru.status_guru, true);
-        const bgClass = (i % 2 === 0) ? 'bg-white/90' : 'bg-emerald-50/50';
+        const bgClass = (i % 2 === 0) ? 'bg-white/95' : 'bg-emerald-50/60';
 
         return `
-          <div class="grid grid-cols-12 gap-2 items-center p-3.5 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm hover:border-emerald-400 transition">
+          <div class="grid grid-cols-12 gap-2 items-center p-3 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm transition hover:border-emerald-400">
             <div class="col-span-2">
-              <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-base md:text-lg px-3 py-1.5 rounded-xl shadow-md shadow-emerald-900/20 inline-block text-center w-full">
+              <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-sm md:text-base px-2.5 py-1.5 rounded-xl shadow-md shadow-emerald-900/15 inline-block text-center w-full">
                 ${j.kelas || '-'}
               </span>
             </div>
 
             <div class="col-span-4 pl-1">
-              <h3 class="font-extrabold text-slate-900 text-base md:text-lg leading-snug">
+              <h3 class="font-extrabold text-slate-900 text-sm md:text-base leading-snug truncate">
                 ${j.mapel || '-'}
               </h3>
-              <span class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block">Mata Pelajaran</span>
+              <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Mata Pelajaran</span>
             </div>
 
             <div class="col-span-4">
-              <div class="flex items-center gap-2 mb-0.5">
-                <span class="font-bold text-slate-800 text-sm md:text-base leading-tight">${j.guru.nama_guru || j.id_guru}</span>
+              <div class="flex items-center gap-1.5 mb-0.5 truncate">
+                <span class="font-bold text-slate-800 text-xs md:text-sm leading-tight truncate">${j.guru.nama_guru || j.id_guru}</span>
               </div>
               <div class="flex items-center gap-2">
                 ${statusBadge}
-                <span class="text-[11px] text-slate-400 font-mono font-bold">(${j.jam_mulai}-${j.jam_selesai})</span>
+                <span class="text-[10px] text-slate-400 font-mono font-bold">(${j.jam_mulai}-${j.jam_selesai})</span>
               </div>
             </div>
 
             <div class="col-span-2 text-right">
-              <span class="bg-emerald-100 text-emerald-900 font-black text-sm md:text-base px-2.5 py-1 rounded-xl border border-emerald-300 inline-block">
+              <span class="bg-emerald-100 text-emerald-900 font-black text-xs md:text-sm px-2.5 py-1 rounded-xl border border-emerald-300 inline-block">
                 ${j.ruang || '-'}
               </span>
             </div>
           </div>
         `;
       }).join('');
+
+      // Berikan efek transisi halus (Page Slide Fade) saat berganti halaman
+      container.className = "space-y-2.5 pr-1 h-full flex flex-col justify-start animate-page-change";
+      container.innerHTML = htmlContent;
+    }
+
+    // Timer Perpergantian Halaman (Setiap 8 Detik)
+    if (!summaryPageTimer) {
+      summaryPageTimer = setInterval(() => {
+        if (activeJadwalList.length > 0) {
+          const totalPages = Math.ceil(activeJadwalList.length / ITEMS_PER_PAGE);
+          if (totalPages > 1) {
+            summaryPageIndex = (summaryPageIndex + 1) % totalPages;
+            renderSummaryPagedView();
+          }
+        }
+      }, 8000); // 8 Detik Diam Per-Halaman
     }
 
     function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
