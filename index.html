@@ -161,9 +161,9 @@
 <body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
 
   <!-- ========================================================================= -->
-  <!-- POSISI ELEMEN VIDEO BACKGROUND KEEP-ALIVE UNTUK MENCEGAH SCREEN JAM TV    -->
+  <!-- ELEMEN VIDEO KEEP-ALIVE TV (DENGAN ENGINE YOUTUBE SIMULATION)             -->
   <!-- ========================================================================= -->
-  <video id="bg-keepalive-video" autoplay loop muted playsinline class="fixed inset-0 w-full h-full object-cover z-0 opacity-20 pointer-events-none">
+  <video id="bg-keepalive-video" autoplay loop muted playsinline webkit-playsinline class="fixed inset-0 w-full h-full object-cover z-0 opacity-20 pointer-events-none">
     <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
   </video>
 
@@ -334,9 +334,76 @@
       fetchData();
     });
 
-    // INTERAKSI REMOTE/TOUCH UNTUK UNLOCK AUDIO & FULLSCREEN & RE-PLAY VIDEO BACKGROUND
+    // =========================================================================
+    // YOUTUBE-STYLE KEEP-ALIVE ENGINE (MENCEGAH SCREEN SAVER SMART TV 24/7)
+    // =========================================================================
+    let wakeLock = null;
+
+    // 1. Kunci Layar dengan Screen Wake Lock API (Protokol Resmi Browser)
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.warn("Wake Lock Info:", err);
+      }
+    }
+
+    // 2. Trik YouTube: Buat Video Stream Canva Internal (100% Offline & Anti-Lag)
+    function initYouTubeStyleKeepAlive() {
+      const bgVideo = document.getElementById('bg-keepalive-video');
+
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 16;
+        canvas.height = 16;
+        const ctx = canvas.getContext('2d');
+        let toggle = false;
+
+        // Ubah pixel canvas secara terus menerus agar membuat frame video nyata
+        setInterval(() => {
+          ctx.fillStyle = toggle ? '#022c22' : '#064e3b';
+          ctx.fillRect(0, 0, 16, 16);
+          toggle = !toggle;
+        }, 1000);
+
+        // Ubah canvas menjadi Aliran Video Stream Kamera/Media Player
+        if (canvas.captureStream && bgVideo) {
+          const stream = canvas.captureStream(25); // 25 FPS Video Stream
+          bgVideo.srcObject = stream;
+          bgVideo.play().catch(() => {});
+        }
+      } catch (e) {
+        console.warn("MediaStream Video Engine Fallback:", e);
+      }
+
+      // Auto-Recovery Check: Setiap 2 detik pastikan video & wakeLock tetap menyala
+      setInterval(() => {
+        if (bgVideo && (bgVideo.paused || bgVideo.ended)) {
+          bgVideo.play().catch(() => {});
+        }
+        if (!wakeLock) {
+          requestWakeLock();
+        }
+      }, 2000);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      requestWakeLock();
+      initYouTubeStyleKeepAlive();
+    });
+
+    document.addEventListener('visibilitychange', async () => {
+      if (wakeLock !== null && document.visibilityState === 'visible') {
+        await requestWakeLock();
+      }
+    });
+
+    // INTERAKSI REMOTE/TOUCH UNTUK UNLOCK AUDIO & FULLSCREEN & RE-PLAY VIDEO
     let audioUnlocked = false;
     function handleTVInteraction() {
+      requestWakeLock();
       const bgVideo = document.getElementById('bg-keepalive-video');
       if (bgVideo && bgVideo.paused) {
         bgVideo.play().catch(() => {});
