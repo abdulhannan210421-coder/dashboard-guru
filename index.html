@@ -129,20 +129,86 @@
       pointer-events: none;
     }
 
-    /* ANIMASI MODERN UNTUK TRANSISI HALAMAN KBM (RIGHT PANEL) */
-    @keyframes pageFadeSlide {
+    /* ========================================================================= */
+    /* ANIMASI TIRAI BAMBU (BAMBOO CURTAIN REVEAL) DARI KIRI & KANAN            */
+    /* ========================================================================= */
+    @keyframes bambooCurtainLeft {
       0% {
+        transform: scaleX(0) skewY(2deg);
+        transform-origin: left center;
         opacity: 0;
-        transform: translateY(18px) scale(0.98);
+        filter: blur(8px);
+      }
+      70% {
+        transform: scaleX(1.03) skewY(-0.5deg);
+        filter: blur(0px);
       }
       100% {
+        transform: scaleX(1) skewY(0deg);
+        transform-origin: left center;
         opacity: 1;
-        transform: translateY(0) scale(1);
+        filter: blur(0px);
       }
     }
 
-    .animate-page-change {
-      animation: pageFadeSlide 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    @keyframes bambooCurtainRight {
+      0% {
+        transform: scaleX(0) skewY(-2deg);
+        transform-origin: right center;
+        opacity: 0;
+        filter: blur(8px);
+      }
+      70% {
+        transform: scaleX(1.03) skewY(0.5deg);
+        filter: blur(0px);
+      }
+      100% {
+        transform: scaleX(1) skewY(0deg);
+        transform-origin: right center;
+        opacity: 1;
+        filter: blur(0px);
+      }
+    }
+
+    .bamboo-row-left {
+      animation: bambooCurtainLeft 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      will-change: transform, opacity;
+    }
+
+    .bamboo-row-right {
+      animation: bambooCurtainRight 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      will-change: transform, opacity;
+    }
+
+    /* ANIMASI CLEANER MASCOT / WIPER ANIMATION */
+    @keyframes cleanerBob {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(3deg); }
+    }
+
+    @keyframes sweepSparkle {
+      0% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+      100% { opacity: 0; transform: scale(0.5) rotate(360deg); }
+    }
+
+    @keyframes screenWipeAction {
+      0% {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        opacity: 1;
+      }
+      100% {
+        clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
+        opacity: 0;
+      }
+    }
+
+    .animate-cleaner {
+      animation: cleanerBob 2.5s ease-in-out infinite;
+    }
+
+    .wiping-exit {
+      animation: screenWipeAction 1.8s cubic-bezier(0.77, 0, 0.175, 1) forwards !important;
     }
 
     /* FOOTER MARQUEE TICKER */
@@ -206,6 +272,126 @@
     <div id="countdown-adzan" class="text-2xl font-bold font-mono bg-white/10 px-6 py-2 rounded-xl border border-white/10">
       Kembali ke jadwal dalam: --:--
     </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL BREAK MODE: INFORMASI WAKTU SHOLAT FULLSCREEN & SELISIH ISTIWA     -->
+  <!-- ========================================================================= -->
+  <div id="modal-break-mode" class="fixed inset-0 bg-gradient-to-br from-emerald-950 via-slate-950 to-teal-950 text-white z-40 hidden flex-col justify-between p-8 overflow-hidden backdrop-blur-xl">
+    
+    <!-- HEADER BREAK MODE -->
+    <div class="flex justify-between items-center border-b border-emerald-500/30 pb-4">
+      <div class="flex items-center gap-4">
+        <div class="bg-emerald-500/20 p-2.5 rounded-2xl border border-emerald-400/30">
+          <span class="text-3xl">🕌</span>
+        </div>
+        <div>
+          <h2 class="text-3xl font-black text-white tracking-tight">INFORMASI PONDOK PESANTREN</h2>
+          <p id="break-hijri-date" class="text-emerald-300 font-bold text-sm">Memuat tanggal & waktu Istiwa...</p>
+        </div>
+      </div>
+
+      <!-- SELISIH ISTIWA VS WIB -->
+      <div class="bg-gradient-to-r from-amber-500/20 to-amber-600/30 border-2 border-amber-400/60 p-3 px-6 rounded-2xl text-right">
+        <span class="text-[11px] font-extrabold uppercase tracking-widest text-amber-300 block">📊 SELISIH ISTIWA DENGAN WIB REALTIME</span>
+        <div id="break-time-diff" class="text-xl font-black text-white font-mono">+18 Menit 24 Detik</div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: CARDS SHOLAT ISTIWA LENGKAP & CUACA DETAIL -->
+    <div class="grid grid-cols-12 gap-6 my-auto">
+      
+      <!-- KIRI: CUACA REALTIME DETAIL -->
+      <div class="col-span-4 bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 flex flex-col justify-between shadow-2xl">
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="bg-teal-500/30 text-teal-300 text-xs font-black px-3 py-1 rounded-full border border-teal-400/30 uppercase">CUACA LOKAL REALTIME</span>
+            <h3 class="text-3xl font-black text-white mt-2" id="break-weather-temp">28°C</h3>
+            <p class="text-slate-300 text-sm font-semibold" id="break-weather-desc">Cerah Berawan</p>
+          </div>
+          <span class="text-6xl" id="break-weather-icon">🌤️</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mt-6">
+          <div class="bg-white/5 p-3 rounded-2xl border border-white/10">
+            <span class="text-[10px] text-slate-400 font-extrabold block uppercase">KELEMBABAN</span>
+            <span class="text-lg font-black text-emerald-300" id="break-humidity">75%</span>
+          </div>
+          <div class="bg-white/5 p-3 rounded-2xl border border-white/10">
+            <span class="text-[10px] text-slate-400 font-extrabold block uppercase">KECEPATAN ANGIN</span>
+            <span class="text-lg font-black text-teal-300" id="break-wind">12 km/jam</span>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-white/10 text-center">
+          <span id="break-next-kbm-timer" class="text-sm font-extrabold text-amber-300 bg-amber-500/20 px-4 py-2 rounded-xl border border-amber-400/40 inline-block animate-pulse">
+            ⏳ KBM Selanjutnya dimulai dalam: --:--
+          </span>
+        </div>
+      </div>
+
+      <!-- KANAN: WAKTU SHOLAT LENGKAP -->
+      <div class="col-span-8 grid grid-cols-3 gap-4">
+        <div class="bg-white/10 p-5 rounded-3xl border border-white/15 text-center flex flex-col justify-center">
+          <span class="text-xs font-black text-emerald-300 uppercase block tracking-wider mb-1">SUBUH</span>
+          <span id="break-sholat-subuh" class="text-4xl font-black text-white font-mono">--:--</span>
+          <span class="text-[10px] text-slate-400 font-bold mt-1">Istiwa Lokal</span>
+        </div>
+
+        <div class="bg-white/10 p-5 rounded-3xl border border-white/15 text-center flex flex-col justify-center">
+          <span class="text-xs font-black text-amber-300 uppercase block tracking-wider mb-1">TERBIT (SYURUQ)</span>
+          <span id="break-sholat-syuruq" class="text-4xl font-black text-white font-mono">--:--</span>
+          <span class="text-[10px] text-slate-400 font-bold mt-1">Istiwa Lokal</span>
+        </div>
+
+        <div class="bg-gradient-to-b from-emerald-600/40 to-emerald-800/60 p-5 rounded-3xl border-2 border-emerald-400/60 text-center flex flex-col justify-center shadow-lg shadow-emerald-900/40">
+          <span class="text-xs font-black text-emerald-200 uppercase block tracking-wider mb-1">DZUHUR</span>
+          <span id="break-sholat-dzuhur" class="text-4xl font-black text-white font-mono">12:04</span>
+          <span class="text-[10px] text-emerald-200 font-bold mt-1">Istiwa Lokal</span>
+        </div>
+
+        <div class="bg-white/10 p-5 rounded-3xl border border-white/15 text-center flex flex-col justify-center">
+          <span class="text-xs font-black text-emerald-300 uppercase block tracking-wider mb-1">ASHAR</span>
+          <span id="break-sholat-ashar" class="text-4xl font-black text-white font-mono">--:--</span>
+          <span class="text-[10px] text-slate-400 font-bold mt-1">Istiwa Lokal</span>
+        </div>
+
+        <div class="bg-white/10 p-5 rounded-3xl border border-white/15 text-center flex flex-col justify-center">
+          <span class="text-xs font-black text-emerald-300 uppercase block tracking-wider mb-1">MAGHRIB</span>
+          <span id="break-sholat-maghrib" class="text-4xl font-black text-white font-mono">--:--</span>
+          <span class="text-[10px] text-slate-400 font-bold mt-1">Istiwa Lokal</span>
+        </div>
+
+        <div class="bg-white/10 p-5 rounded-3xl border border-white/15 text-center flex flex-col justify-center">
+          <span class="text-xs font-black text-emerald-300 uppercase block tracking-wider mb-1">ISYA</span>
+          <span id="break-sholat-isya" class="text-4xl font-black text-white font-mono">--:--</span>
+          <span class="text-[10px] text-slate-400 font-bold mt-1">Istiwa Lokal</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER BREAK MODE & KARAKTER ANIMASI PEMBERSIH LAYAR (SCREEN CLEANER) -->
+    <div class="relative border-t border-emerald-500/30 pt-3 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="bg-emerald-500/20 text-emerald-300 font-extrabold text-xs px-3 py-1 rounded-full border border-emerald-400/30">
+          🧹 LAYAR INTERAKTIF PONDOK PESANTREN
+        </span>
+        <span class="text-xs text-slate-300 font-medium">Sistem otomatis menyapu layar sebelum KBM berikutnya dimulai.</span>
+      </div>
+
+      <!-- KARAKTER KARTUN BOT PEMBERSIH DENGAN SQUEEGEE/PEMBERSIH KACA -->
+      <div id="cleaner-mascot" class="flex items-center gap-3 animate-cleaner bg-white/10 px-5 py-2 rounded-2xl border border-white/20 shadow-xl">
+        <span class="text-3xl">🤖🧹</span>
+        <div>
+          <span class="text-xs font-black text-amber-300 block">CLEANER ROBOT ACTIVE</span>
+          <span class="text-[10px] text-slate-300">Menyapu tampilan layar secara otomatis...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BILAH WIPER GLASS PEMBERSIH UNTUK ANIMASI WIPE LAYAR -->
+    <div id="wiper-blade" class="fixed inset-y-0 left-0 w-16 bg-gradient-to-r from-emerald-400 via-white to-transparent opacity-0 pointer-events-none z-50"></div>
   </div>
 
   <!-- HEADER -->
@@ -280,7 +466,7 @@
       </div>
     </section>
 
-    <!-- SEKSI KANAN: RINGKASAN KBM HALAMAN STATIS (SWAP SLIDE) -->
+    <!-- SEKSI KANAN: RINGKASAN KBM DENGAN ANIMASI TIRAI BAMBU -->
     <section class="col-span-6 flex flex-col h-full overflow-hidden">
       <div class="mb-2 px-2 flex justify-between items-center flex-shrink-0">
         <span id="section-title-right" class="text-xs font-extrabold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -293,16 +479,16 @@
 
       <div class="glass-card rounded-3xl p-4 flex-1 overflow-hidden border-2 border-white flex flex-col">
         <!-- HEADER TABEL -->
-        <div class="grid grid-cols-12 gap-2 text-xs font-black uppercase tracking-wider text-emerald-900 border-b-2 border-emerald-200 pb-2 mb-3 flex-shrink-0 px-2">
+        <div class="grid grid-cols-12 gap-2 text-xs font-black uppercase tracking-wider text-emerald-900 border-b-2 border-emerald-200 pb-2 mb-2 flex-shrink-0 px-2">
           <div class="col-span-2">KELAS</div>
           <div class="col-span-4">MATA PELAJARAN</div>
           <div class="col-span-4">GURU PENGAJAR</div>
           <div class="col-span-2 text-right">RUANG</div>
         </div>
 
-        <!-- CONTAINER BARIS GURU (PER HALAMAN DIAM 8 DETIK) -->
+        <!-- CONTAINER BARIS GURU (7 BARIS FULL AREA) -->
         <div class="flex-1 overflow-hidden relative">
-          <div id="summary-cards-container" class="space-y-2.5 pr-1 h-full flex flex-col justify-start">
+          <div id="summary-cards-container" class="space-y-2 pr-1 h-full flex flex-col justify-between">
             <div class="text-center py-16 text-slate-400 font-extrabold text-lg">Memuat data KBM...</div>
           </div>
         </div>
@@ -639,8 +825,12 @@
       if (fAsrMin === 60) { fAsrDeg += 1; fAsrMin = 0; }
       const asrBox = convertLattice4(fAsrDeg, fAsrMin);
 
+      // Hitung Syuruq (Terbit)
+      const syuruqBox = convertLattice4(Math.floor(totalMinLail / 60), totalMinLail % 60);
+
       return {
         subuh:   addIhtiyathMinutes(subhBox.jam, subhBox.menit, 3),
+        syuruq:  addIhtiyathMinutes(syuruqBox.jam, syuruqBox.menit, 0),
         dzuhur:  "12:04",
         ashar:   addIhtiyathMinutes((asrBox.jam + 12) % 24, asrBox.menit, 3),
         maghrib: addIhtiyathMinutes((maghribBox.jam + 12) % 24, maghribBox.menit, 3),
@@ -668,7 +858,11 @@
     // PAGING KBM RINGKASAN ENGINE
     let summaryPageIndex = 0;
     let summaryPageTimer = null;
-    const ITEMS_PER_PAGE = 5; // Tampilkan 5 baris guru sekaligus secara diam
+    const ITEMS_PER_PAGE = 7; // Menampilkan 7 Baris Sekaligus agar Penuh
+
+    // BREAK MODE STATE
+    let isBreakModeActive = false;
+    let isWipingExit = false;
 
     function cleanDayStr(val) {
       return String(val || '').trim().toUpperCase().replace(/[^A-Z]/g, '');
@@ -676,12 +870,18 @@
 
     async function fetchRealWeather() {
       try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LATITUDE}&longitude=${LONGITUDE}&current_weather=true`);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LATITUDE}&longitude=${LONGITUDE}&current_weather=true&relative_humidity_2m=true`);
         if (!res.ok) return;
         const data = await res.json();
         if (data && data.current_weather) {
           const temp = Math.round(data.current_weather.temperature);
           document.getElementById('weather-text').innerText = `${temp}°C`;
+          
+          const breakTemp = document.getElementById('break-weather-temp');
+          if (breakTemp) breakTemp.innerText = `${temp}°C`;
+
+          const breakWind = document.getElementById('break-wind');
+          if (breakWind) breakWind.innerText = `${data.current_weather.windspeed || 12} km/jam`;
         }
       } catch (e) {
         console.warn("Weather fetch error:", e);
@@ -742,6 +942,31 @@
       document.getElementById('time-maghrib').innerText = p.maghrib;
       document.getElementById('time-isya').innerText = p.isya;
 
+      // Update Modal Break Mode Sholat
+      const breakSubuh = document.getElementById('break-sholat-subuh');
+      if (breakSubuh) breakSubuh.innerText = p.subuh;
+      const breakSyuruq = document.getElementById('break-sholat-syuruq');
+      if (breakSyuruq) breakSyuruq.innerText = p.syuruq || '05:30';
+      const breakDzuhur = document.getElementById('break-sholat-dzuhur');
+      if (breakDzuhur) breakDzuhur.innerText = p.dzuhur;
+      const breakAshar = document.getElementById('break-sholat-ashar');
+      if (breakAshar) breakAshar.innerText = p.ashar;
+      const breakMaghrib = document.getElementById('break-sholat-maghrib');
+      if (breakMaghrib) breakMaghrib.innerText = p.maghrib;
+      const breakIsya = document.getElementById('break-sholat-isya');
+      if (breakIsya) breakIsya.innerText = p.isya;
+
+      // Update Selisih Istiwa vs WIB Realtime
+      const diffMs = istiwaNow.getTime() - now.getTime();
+      const diffTotalSec = Math.abs(Math.floor(diffMs / 1000));
+      const diffMin = Math.floor(diffTotalSec / 60);
+      const diffSec = diffTotalSec % 60;
+      const signStr = diffMs >= 0 ? '+' : '-';
+      const breakDiffEl = document.getElementById('break-time-diff');
+      if (breakDiffEl) {
+        breakDiffEl.innerText = `${signStr}${diffMin} Menit ${diffSec} Detik`;
+      }
+
       const formatHM = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
       const nowIstiwaHM = formatHM(istiwaNow);
 
@@ -755,14 +980,14 @@
 
       const currentIstiwaSec = istiwaNow.getHours() * 3600 + istiwaNow.getMinutes() * 60 + istiwaNow.getSeconds();
       let nextSholatObj = null;
-      let diffSec = 0;
+      let diffSecPrayer = 0;
 
       for (let s of listSholat) {
         const parts = s.time.split(':');
         const pSec = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60;
         if (pSec > currentIstiwaSec) {
           nextSholatObj = s;
-          diffSec = pSec - currentIstiwaSec;
+          diffSecPrayer = pSec - currentIstiwaSec;
           break;
         }
       }
@@ -771,12 +996,12 @@
         nextSholatObj = listSholat[0];
         const parts = nextSholatObj.time.split(':');
         const pSec = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60;
-        diffSec = (24 * 3600 - currentIstiwaSec) + pSec;
+        diffSecPrayer = (24 * 3600 - currentIstiwaSec) + pSec;
       }
 
-      const cdH = String(Math.floor(diffSec / 3600)).padStart(2, '0');
-      const cdM = String(Math.floor((diffSec % 3600) / 60)).padStart(2, '0');
-      const cdS = String(diffSec % 60).padStart(2, '0');
+      const cdH = String(Math.floor(diffSecPrayer / 3600)).padStart(2, '0');
+      const cdM = String(Math.floor((diffSecPrayer % 3600) / 60)).padStart(2, '0');
+      const cdS = String(diffSecPrayer % 60).padStart(2, '0');
 
       const nameEl = document.getElementById('next-prayer-name');
       const countEl = document.getElementById('next-prayer-countdown');
@@ -798,9 +1023,9 @@
         }
       });
 
-      if (diffSec <= 60 && diffSec > 0 && !adzanActive) {
-        showPreAdzanScreen(nextSholatObj.name, diffSec);
-      } else if (preAdzanActive && (diffSec > 60 || diffSec <= 0)) {
+      if (diffSecPrayer <= 60 && diffSecPrayer > 0 && !adzanActive) {
+        showPreAdzanScreen(nextSholatObj.name, diffSecPrayer);
+      } else if (preAdzanActive && (diffSecPrayer > 60 || diffSecPrayer <= 0)) {
         hidePreAdzanScreen();
       }
 
@@ -1009,7 +1234,11 @@
 
       const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
       const bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-      document.getElementById('info-tanggal').innerText = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()} M | ${getHijriDate(now)}`;
+      const dateStr = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()} M | ${getHijriDate(now)}`;
+      
+      document.getElementById('info-tanggal').innerText = dateStr;
+      const breakHijri = document.getElementById('break-hijri-date');
+      if (breakHijri) breakHijri.innerText = dateStr;
 
       updateHeaderPrayerRibbon();
 
@@ -1079,6 +1308,7 @@
       const guruMap = {};
       dataGuruList.forEach(g => { if (g.id_guru) guruMap[g.id_guru] = g; });
 
+      // DAPATKAN KBM AKTIF JAM INI
       let jadwalAktif = jadwalPelajaranList.filter(j => {
         if (cleanDayStr(j.hari) !== hariIniKapital) return false;
         const start = timeToMinutes(j.jam_mulai), end = timeToMinutes(j.jam_selesai);
@@ -1089,7 +1319,21 @@
         guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '', status_guru: '' }
       }));
 
+      // HITUNG SELISIH WAKTU KE KBM SEBELUMNYA ATAU SELANJUTNYA UNTUK HITUNG MUNDUR CLEANER
+      let nextKbmStartMinutes = -1;
+      const upcomingJadwal = jadwalPelajaranList.filter(j => {
+        if (cleanDayStr(j.hari) !== hariIniKapital) return false;
+        const start = timeToMinutes(j.jam_mulai);
+        return start > menitSekarangIstiwa;
+      }).sort((a,b) => timeToMinutes(a.jam_mulai) - timeToMinutes(b.jam_mulai));
+
+      if (upcomingJadwal.length > 0) {
+        nextKbmStartMinutes = timeToMinutes(upcomingJadwal[0].jam_mulai);
+      }
+
+      // CEK MODE KBM AKTIF VS MODE JAM KOSONG (BREAK MODE)
       if (jadwalAktif.length === 0) {
+        // TAMPILKAN BREAK MODE FULLSCREEN JIKA TIDAK ADA KBM AKTIF
         isIdleTomorrowMode = true;
         const besokIndex = (hariIniIndex + 1) % 7;
         const besokKapital = cleanDayStr(hariList[besokIndex]);
@@ -1101,16 +1345,14 @@
           guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '', status_guru: '' }
         }));
 
-        if (activeJadwalList.length > 0) {
-          document.getElementById('section-title-left').innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span> ☀️ PRATINJAU JADWAL KBM BESOK (${hariList[besokIndex]})`;
-          document.getElementById('section-title-right').innerHTML = `<span>📜</span> AGENDA KBM HARI ESOK (${hariList[besokIndex]})`;
-        } else {
-          document.getElementById('section-title-left').innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span> 🌙 MODE PEMANTAUAN WAKTU ISTIWA`;
-          document.getElementById('section-title-right').innerHTML = `<span>📜</span> LINGKUNGAN PONDOK PESANTREN`;
-        }
+        triggerBreakModeOverlay(nextKbmStartMinutes, menitSekarangIstiwa, istiwaNow.getSeconds());
+
       } else {
+        // JIKA ADA KBM AKTIF, TUTUP BREAK MODE DAN TAMPILKAN DASHBOARD UTAMA
         isIdleTomorrowMode = false;
         activeJadwalList = jadwalAktif;
+        dismissBreakModeOverlay();
+
         document.getElementById('section-title-left').innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping"></span> SOROTAN GURU MENGAJAR (LIVE COVER FLOW)`;
         document.getElementById('section-title-right').innerHTML = `<span>📜</span> RINGKASAN KBM AKTIF JAM INI`;
       }
@@ -1132,6 +1374,56 @@
       }
 
       renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList);
+    }
+
+    // =========================================================================
+    // MODAL FULLSCREEN BREAK MODE ENGINE & ANIMASI PEMBERSIH LAYAR
+    // =========================================================================
+    function triggerBreakModeOverlay(nextKbmStartMinutes, menitSekarangIstiwa, detikSekarang) {
+      const modal = document.getElementById('modal-break-mode');
+      const timerText = document.getElementById('break-next-kbm-timer');
+
+      if (!isBreakModeActive) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.classList.remove('wiping-exit');
+        isBreakModeActive = true;
+        isWipingExit = false;
+      }
+
+      if (nextKbmStartMinutes !== -1) {
+        const diffMinutes = nextKbmStartMinutes - menitSekarangIstiwa - 1;
+        const diffSecs = 60 - detikSekarang;
+        const totalRemainingSec = (diffMinutes * 60) + diffSecs;
+
+        const m = String(Math.max(0, Math.floor(totalRemainingSec / 60))).padStart(2, '0');
+        const s = String(Math.max(0, totalRemainingSec % 60)).padStart(2, '0');
+        if (timerText) timerText.innerText = `⏳ KBM Selanjutnya dimulai dalam: ${m}:${s}`;
+
+        // JIKA MENJELANG KBM (DALAM 60 DETIK TERAKHIR), AKTIFKAN ANIMASI MENYAPU / HAPUS LAYAR
+        if (totalRemainingSec <= 60 && totalRemainingSec > 0 && !isWipingExit) {
+          isWipingExit = true;
+          modal.classList.add('wiping-exit');
+          setTimeout(() => {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            isBreakModeActive = false;
+          }, 1800);
+        }
+      } else {
+        if (timerText) timerText.innerText = `🌙 Tidak ada KBM tersisa hari ini.`;
+      }
+    }
+
+    function dismissBreakModeOverlay() {
+      const modal = document.getElementById('modal-break-mode');
+      if (isBreakModeActive) {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+        modal.classList.remove('wiping-exit');
+        isBreakModeActive = false;
+        isWipingExit = false;
+      }
     }
 
     function renderCoverflowDOM(menitSekarangIstiwa) {
@@ -1244,7 +1536,7 @@
     }
 
     // =========================================================================
-    // RENDER RINGKASAN KBM MODE STATIS DENGAN TRANSISI FADE-SLIDE PER HALAMAN
+    // RENDER RINGKASAN KBM 7 BARIS DENGAN ANIMASI TIRAI BAMBU (KIRI & KANAN)
     // =========================================================================
     function renderSummaryPagedView() {
       const container = document.getElementById('summary-cards-container');
@@ -1274,33 +1566,37 @@
         const statusBadge = getStatusGuruBadge(j.guru.status_guru, true);
         const bgClass = (i % 2 === 0) ? 'bg-white/95' : 'bg-emerald-50/60';
 
+        // Alternasi Animasi Tirai Bambu: Genap Terbuka Dari Kiri, Ganjil Terbuka Dari Kanan
+        const curtainClass = (i % 2 === 0) ? 'bamboo-row-left' : 'bamboo-row-right';
+        const delaySec = (i * 0.08).toFixed(2);
+
         return `
-          <div class="grid grid-cols-12 gap-2 items-center p-3 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm transition hover:border-emerald-400">
+          <div class="grid grid-cols-12 gap-2 items-center p-2.5 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm transition hover:border-emerald-400 ${curtainClass}" style="animation-delay: ${delaySec}s;">
             <div class="col-span-2">
-              <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-sm md:text-base px-2.5 py-1.5 rounded-xl shadow-md shadow-emerald-900/15 inline-block text-center w-full">
+              <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-xs md:text-sm px-2 py-1 rounded-xl shadow-md shadow-emerald-900/15 inline-block text-center w-full">
                 ${j.kelas || '-'}
               </span>
             </div>
 
             <div class="col-span-4 pl-1">
-              <h3 class="font-extrabold text-slate-900 text-sm md:text-base leading-snug truncate">
+              <h3 class="font-extrabold text-slate-900 text-xs md:text-sm leading-snug truncate">
                 ${j.mapel || '-'}
               </h3>
-              <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Mata Pelajaran</span>
+              <span class="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block">Mata Pelajaran</span>
             </div>
 
             <div class="col-span-4">
               <div class="flex items-center gap-1.5 mb-0.5 truncate">
-                <span class="font-bold text-slate-800 text-xs md:text-sm leading-tight truncate">${j.guru.nama_guru || j.id_guru}</span>
+                <span class="font-bold text-slate-800 text-xs leading-tight truncate">${j.guru.nama_guru || j.id_guru}</span>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1.5">
                 ${statusBadge}
-                <span class="text-[10px] text-slate-400 font-mono font-bold">(${j.jam_mulai}-${j.jam_selesai})</span>
+                <span class="text-[9px] text-slate-400 font-mono font-bold">(${j.jam_mulai}-${j.jam_selesai})</span>
               </div>
             </div>
 
             <div class="col-span-2 text-right">
-              <span class="bg-emerald-100 text-emerald-900 font-black text-xs md:text-sm px-2.5 py-1 rounded-xl border border-emerald-300 inline-block">
+              <span class="bg-emerald-100 text-emerald-900 font-black text-xs px-2 py-1 rounded-xl border border-emerald-300 inline-block">
                 ${j.ruang || '-'}
               </span>
             </div>
@@ -1308,12 +1604,11 @@
         `;
       }).join('');
 
-      // Berikan efek transisi halus (Page Slide Fade) saat berganti halaman
-      container.className = "space-y-2.5 pr-1 h-full flex flex-col justify-start animate-page-change";
+      container.className = "space-y-2 pr-1 h-full flex flex-col justify-between";
       container.innerHTML = htmlContent;
     }
 
-    // Timer Perpergantian Halaman (Setiap 8 Detik)
+    // Timer Pergantian Halaman KBM (Setiap 8 Detik)
     if (!summaryPageTimer) {
       summaryPageTimer = setInterval(() => {
         if (activeJadwalList.length > 0) {
@@ -1323,7 +1618,7 @@
             renderSummaryPagedView();
           }
         }
-      }, 8000); // 8 Detik Diam Per-Halaman
+      }, 8000); // 8 Detik Per Halaman
     }
 
     function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
