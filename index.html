@@ -5,15 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Digital Signage - Jadwal Guru & Waktu Sholat Falak Realtime</title>
 
-  <!-- Tailwind CSS & Font -->
+  <!-- Tailwind CSS & Font Tulisan Tangan (Kalam & Caveat) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       transition: background-color 0.5s ease, color 0.5s ease;
       user-select: none;
+    }
+
+    .font-handwritten {
+      font-family: 'Kalam', 'Caveat', cursive, sans-serif;
     }
 
     .bg-vibrant {
@@ -39,18 +43,39 @@
       box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
     }
 
-    body.dark-mode .text-emerald-950,
-    body.dark-mode .text-slate-800,
-    body.dark-mode .text-slate-900 {
-      color: #f8fafc !important;
+    /* TAMPILAN LEMBARAN KERTAS & TULISAN TANGAN */
+    .paper-sheet {
+      background-color: #fbf8ef;
+      background-image: repeating-linear-gradient(#fbf8ef 0px, #fbf8ef 29px, #e8dfcf 30px);
+      border: 2px solid #d3c7b2;
+      box-shadow: 0 10px 25px -5px rgba(101, 85, 58, 0.15), inset 0 0 40px rgba(220, 205, 180, 0.2);
     }
-    body.dark-mode .text-emerald-800,
-    body.dark-mode .text-emerald-700 {
-      color: #34d399 !important;
+
+    body.dark-mode .paper-sheet {
+      background-color: #1e293b;
+      background-image: repeating-linear-gradient(#1e293b 0px, #1e293b 29px, #334155 30px);
+      border-color: #475569;
+      color: #f8fafc;
     }
-    body.dark-mode .bg-slate-50 {
-      background-color: rgba(30, 41, 59, 0.7) !important;
-      border-color: rgba(255, 255, 255, 0.1) !important;
+
+    /* ANIMASI MEMBUKA KERTAS (PAPER UNFOLD) - RINGAN & BEBAS LAG */
+    @keyframes paperUnfold {
+      0% {
+        transform: perspective(600px) rotateX(-25deg) scaleY(0.9);
+        opacity: 0;
+        transform-origin: top center;
+      }
+      100% {
+        transform: perspective(600px) rotateX(0deg) scaleY(1);
+        opacity: 1;
+        transform-origin: top center;
+      }
+    }
+
+    .animate-paper-unfold {
+      animation: paperUnfold 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
     }
 
     /* COVERFLOW 3D LEFT PANEL */
@@ -91,10 +116,6 @@
       box-shadow: 0 30px 60px -12px rgba(6, 95, 70, 0.28), 0 0 0 2.5px #059669;
     }
 
-    body.dark-mode .coverflow-card.active {
-      box-shadow: 0 30px 60px -12px rgba(16, 185, 129, 0.3), 0 0 0 2.5px #10b981;
-    }
-
     .coverflow-card.prev {
       transform: translate3d(-52%, 0, -120px) scale(0.8) rotateY(26deg);
       z-index: 20;
@@ -123,26 +144,6 @@
       pointer-events: none;
     }
 
-    /* ========================================================================= */
-    /* ANIMASI SCROLL / SLIDE PER KELOMPOK (RINGAN, LANTJAR & BEBAS LAG DI TV)   */
-    /* ========================================================================= */
-    @keyframes groupSlideUp {
-      0% {
-        opacity: 0;
-        transform: translate3d(0, 35px, 0);
-      }
-      100% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0);
-      }
-    }
-
-    .group-slide-animation {
-      animation: groupSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      will-change: transform, opacity;
-      backface-visibility: hidden;
-    }
-
     /* ANIMASI CLEANER MASCOT */
     @keyframes cleanerBob {
       0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
@@ -150,14 +151,8 @@
     }
 
     @keyframes screenWipeAction {
-      0% {
-        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-        opacity: 1;
-      }
-      100% {
-        clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
-        opacity: 0;
-      }
+      0% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); opacity: 1; }
+      100% { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); opacity: 0; }
     }
 
     .animate-cleaner {
@@ -182,7 +177,7 @@
 </head>
 <body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
 
-  <!-- VIDEO KEEP-ALIVE TV (DENGAN ENGINE YOUTUBE SIMULATION) -->
+  <!-- VIDEO KEEP-ALIVE TV (SIMULASI YOUTUBE ENGINE AGAR TV BEBAS SCREEN SAVER) -->
   <video id="bg-keepalive-video" autoplay loop muted playsinline webkit-playsinline class="fixed inset-0 w-full h-full object-cover z-0 opacity-20 pointer-events-none">
     <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
   </video>
@@ -406,30 +401,30 @@
       </div>
     </section>
 
-    <!-- SEKSI KANAN: RINGKASAN KBM DENGAN ANIMASI SCROLL KELOMPOK -->
+    <!-- SEKSI KANAN: RINGKASAN KBM KERTAS & TULISAN TANGAN 10 BARIS -->
     <section class="col-span-6 flex flex-col h-full overflow-hidden">
       <div class="mb-2 px-2 flex justify-between items-center flex-shrink-0">
         <span id="section-title-right" class="text-xs font-extrabold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
-          <span>📜</span> RINGKASAN KBM AKTIF JAM INI
+          <span>📜</span> RINGKASAN KBM AKTIF JAM INI (LEMBARAN KERTAS)
         </span>
-        <span id="page-indicator-badge" class="text-[10px] bg-emerald-800 text-white font-extrabold px-3 py-1 rounded-full tracking-wider uppercase shadow-sm">
+        <span id="page-indicator-badge" class="text-xs bg-amber-900 text-amber-100 font-handwritten font-bold px-3 py-0.5 rounded-full shadow-sm">
           Hal 1/1
         </span>
       </div>
 
-      <div class="glass-card rounded-3xl p-4 flex-1 overflow-hidden border-2 border-white flex flex-col">
-        <!-- HEADER TABEL -->
-        <div class="grid grid-cols-12 gap-2 text-xs font-black uppercase tracking-wider text-emerald-900 border-b-2 border-emerald-200 pb-2 mb-2 flex-shrink-0 px-2">
+      <div class="paper-sheet rounded-3xl p-3 flex-1 overflow-hidden flex flex-col relative">
+        <!-- HEADER TABEL KERTAS -->
+        <div class="grid grid-cols-12 gap-2 text-sm md:text-base font-handwritten font-bold tracking-wide text-amber-950 border-b-2 border-amber-800/40 pb-1 mb-1 flex-shrink-0 px-2">
           <div class="col-span-2">KELAS</div>
           <div class="col-span-4">MATA PELAJARAN</div>
           <div class="col-span-4">GURU PENGAJAR</div>
           <div class="col-span-2 text-right">RUANG</div>
         </div>
 
-        <!-- CONTAINER BARIS GURU (LAYOUT PAS DENGAN PADDING PADAT) -->
+        <!-- CONTAINER TABEL (PAS 10 BARIS) -->
         <div class="flex-1 overflow-hidden relative">
           <div id="summary-cards-container" class="h-full flex flex-col justify-between">
-            <div class="text-center py-16 text-slate-400 font-extrabold text-lg">Memuat data KBM...</div>
+            <div class="text-center py-16 text-amber-800/60 font-handwritten text-xl">Memuat lembaran KBM...</div>
           </div>
         </div>
       </div>
@@ -1118,9 +1113,9 @@
     function getStatusGuruBadge(statusGuru, isTableSummary = false) {
       const st = (statusGuru || '').toString().trim().toUpperCase();
       if (isTableSummary) {
-        if (st.includes('WALI')) return `<span class="bg-amber-100 text-amber-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-amber-300">★ WALI KELAS</span>`;
-        if (st.includes('FAN')) return `<span class="bg-teal-100 text-teal-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-teal-300">● FAN</span>`;
-        return `<span class="bg-emerald-100 text-emerald-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-emerald-300">${st || 'GURU'}</span>`;
+        if (st.includes('WALI')) return `<span class="bg-amber-200/90 text-amber-950 font-handwritten text-xs px-2 py-0.5 rounded border border-amber-400">★ WALI KELAS</span>`;
+        if (st.includes('FAN')) return `<span class="bg-teal-200/90 text-teal-950 font-handwritten text-xs px-2 py-0.5 rounded border border-teal-400">● FAN</span>`;
+        return `<span class="bg-amber-100 text-amber-900 font-handwritten text-xs px-2 py-0.5 rounded border border-amber-300">${st || 'GURU'}</span>`;
       } else {
         if (st.includes('WALI')) return `<span class="bg-amber-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-amber-300">★ WALI KELAS</span>`;
         if (st.includes('FAN')) return `<span class="bg-teal-700 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-teal-400">● FAN</span>`;
@@ -1279,7 +1274,7 @@
         dismissBreakModeOverlay();
 
         document.getElementById('section-title-left').innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping"></span> SOROTAN GURU MENGAJAR (LIVE COVER FLOW)`;
-        document.getElementById('section-title-right').innerHTML = `<span>📜</span> RINGKASAN KBM AKTIF JAM INI`;
+        document.getElementById('section-title-right').innerHTML = `<span>📜</span> RINGKASAN KBM AKTIF JAM INI (LEMBARAN KERTAS)`;
       }
 
       const currentKey = activeJadwalList.map(item => item.id_guru + item.kelas + item.jam_mulai).join('|') + `_${isIdleTomorrowMode}`;
@@ -1457,7 +1452,7 @@
     }
 
     // =========================================================================
-    // RENDER RINGKASAN KBM SCROLL PER KELOMPOK (SANGAT SMOOTH & PENUH 6 BARIS)
+    // RENDER RINGKASAN KBM 10 BARIS PAS DENGAN ANIMASI MEMBUKA KERTAS (PAPER UNFOLD)
     // =========================================================================
     function renderSummaryPagedView() {
       const container = document.getElementById('summary-cards-container');
@@ -1469,55 +1464,48 @@
         container.innerHTML = `
           <div class="flex flex-col items-center justify-center py-12 text-center h-full">
             <div class="text-5xl mb-3">📖</div>
-            <h4 class="font-extrabold text-slate-700 text-base mb-1">Tidak Ada KBM Aktif</h4>
-            <p class="text-xs text-slate-400 max-w-xs">Seluruh santri dan ustadz dapat memanfaatkan waktu untuk ibadah atau istirahat.</p>
+            <h4 class="font-bold font-handwritten text-amber-900 text-xl mb-1">Tidak Ada KBM Aktif</h4>
+            <p class="text-sm font-handwritten text-amber-800/80 max-w-xs">Seluruh santri dan ustadz dapat memanfaatkan waktu untuk ibadah atau istirahat.</p>
           </div>
         `;
         return;
       }
 
-      // KONSISTEN 6 BARIS PER KELOMPOK UNTUK MENGISI SELURUH TINGGI LAYAR
-      const ITEMS_PER_GROUP = 6;
-      const totalPages = Math.ceil(totalItems / ITEMS_PER_GROUP);
+      // KONSISTEN PAS 10 BARIS PER LEMBAR KERTAS
+      const ITEMS_PER_SHEET = 10;
+      const totalPages = Math.ceil(totalItems / ITEMS_PER_SHEET);
 
       if (summaryPageIndex >= totalPages) summaryPageIndex = 0;
 
       badge.innerText = `HALAMAN ${summaryPageIndex + 1} DARI ${totalPages}`;
 
-      const startIndex = summaryPageIndex * ITEMS_PER_GROUP;
-      const currentBatch = activeJadwalList.slice(startIndex, startIndex + ITEMS_PER_GROUP);
+      const startIndex = summaryPageIndex * ITEMS_PER_SHEET;
+      const currentBatch = activeJadwalList.slice(startIndex, startIndex + ITEMS_PER_SHEET);
 
       const rowsHtml = currentBatch.map((j, i) => {
         const statusBadge = getStatusGuruBadge(j.guru.status_guru, true);
-        const bgClass = (i % 2 === 0) ? 'bg-white/95' : 'bg-emerald-50/70';
 
         return `
-          <div class="grid grid-cols-12 gap-2 items-center py-3 px-3.5 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm transition">
+          <div class="grid grid-cols-12 gap-2 items-center py-1 px-2 border-b border-amber-800/20 font-handwritten hover:bg-amber-100/50 transition">
             <div class="col-span-2">
-              <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-xs md:text-sm px-2 py-1.5 rounded-xl shadow-md inline-block text-center w-full">
+              <span class="bg-amber-900/90 text-amber-50 font-bold text-xs md:text-sm px-2 py-0.5 rounded shadow-sm inline-block text-center w-full">
                 ${j.kelas || '-'}
               </span>
             </div>
 
             <div class="col-span-4 pl-1">
-              <h3 class="font-extrabold text-slate-900 text-xs md:text-sm leading-snug truncate">
+              <h3 class="font-bold text-amber-950 text-sm md:text-base leading-none truncate">
                 ${j.mapel || '-'}
               </h3>
-              <span class="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block">Mata Pelajaran</span>
             </div>
 
-            <div class="col-span-4">
-              <div class="flex items-center gap-1.5 mb-0.5 truncate">
-                <span class="font-bold text-slate-800 text-xs leading-tight truncate">${j.guru.nama_guru || j.id_guru}</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                ${statusBadge}
-                <span class="text-[9px] text-slate-400 font-mono font-bold">(${j.jam_mulai}-${j.jam_selesai})</span>
-              </div>
+            <div class="col-span-4 flex items-center justify-between gap-1 pr-2 truncate">
+              <span class="font-bold text-amber-950 text-xs md:text-sm truncate">${j.guru.nama_guru || j.id_guru}</span>
+              ${statusBadge}
             </div>
 
             <div class="col-span-2 text-right">
-              <span class="bg-emerald-100 text-emerald-900 font-black text-xs px-2.5 py-1.5 rounded-xl border border-emerald-300 inline-block">
+              <span class="bg-amber-200/80 text-amber-950 font-bold text-xs px-2 py-0.5 rounded border border-amber-400 inline-block">
                 ${j.ruang || '-'}
               </span>
             </div>
@@ -1525,23 +1513,23 @@
         `;
       }).join('');
 
-      // PEMBUNGKUS ANGKAT SATU KELOMPOK SEKALIGUS (GPU SLIDE UP ANIMATION)
+      // ANIMASI MEMBUKA KERTAS (PAPER UNFOLD) GPU ACCELERATED
       container.className = "h-full flex flex-col justify-between";
-      container.innerHTML = `<div class="h-full flex flex-col justify-between group-slide-animation">${rowsHtml}</div>`;
+      container.innerHTML = `<div class="h-full flex flex-col justify-between animate-paper-unfold">${rowsHtml}</div>`;
     }
 
-    // TIMER PERGANTIAN KELOMPOK (BERHENTI BEBERAPA SAAT SEBELUM SCROLL KELOMPOK BERIKUTNYA)
+    // TIMER PERGANTIAN HALAMAN KERTAS (7 DETIK PER LEMBAR)
     if (!summaryPageTimer) {
       summaryPageTimer = setInterval(() => {
         if (activeJadwalList.length > 0) {
-          const ITEMS_PER_GROUP = 6;
-          const totalPages = Math.ceil(activeJadwalList.length / ITEMS_PER_GROUP);
+          const ITEMS_PER_SHEET = 10;
+          const totalPages = Math.ceil(activeJadwalList.length / ITEMS_PER_SHEET);
           if (totalPages > 1) {
             summaryPageIndex = (summaryPageIndex + 1) % totalPages;
             renderSummaryPagedView();
           }
         }
-      }, 7000); // Berhenti selama 7 detik per kelompok
+      }, 7000);
     }
 
     function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
