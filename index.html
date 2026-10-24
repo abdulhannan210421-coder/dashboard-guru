@@ -170,9 +170,17 @@
 <body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
 
   <!-- VIDEO KEEP-ALIVE TV (ENGINE YOUTUBE SIMULATION UNTUK MENCEGAH SLEEP/SCREENSAVER) -->
-  <video id="bg-keepalive-video" autoplay loop muted playsinline webkit-playsinline class="fixed inset-0 w-full h-full object-cover z-0 opacity-20 pointer-events-none">
-    <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
-  </video>
+<video id="bg-keepalive-video"
+       autoplay
+       loop
+       muted
+       playsinline
+       webkit-playsinline
+       class="fixed inset-0 w-full h-full object-cover z-0 opacity-20 pointer-events-none">
+  <source src="keepalive.mp4" type="video/mp4">
+  <!-- fallback online -->
+  <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
+</video>
 
   <!-- Audio Element Adzan -->
   <audio id="audio-adzan" preload="auto">
@@ -471,40 +479,26 @@
       }
     }
 
-    function initYouTubeStyleKeepAlive() {
-      const bgVideo = document.getElementById('bg-keepalive-video');
+function initYouTubeStyleKeepAlive() {
+  const bgVideo = document.getElementById('bg-keepalive-video');
+  if (!bgVideo) return;
 
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = 16;
-        canvas.height = 16;
-        const ctx = canvas.getContext('2d');
-        let toggle = false;
+  // Jangan pakai canvas stream lagi untuk webOS
+  // Biarkan video memakai source dari HTML (keepalive.mp4)
 
-        setInterval(() => {
-          ctx.fillStyle = toggle ? '#022c22' : '#064e3b';
-          ctx.fillRect(0, 0, 16, 16);
-          toggle = !toggle;
-        }, 1000);
+  // Pastikan video langsung play
+  bgVideo.muted = true;
+  bgVideo.volume = 0;
+  bgVideo.play().catch(() => {});
 
-        if (canvas.captureStream && bgVideo) {
-          const stream = canvas.captureStream(25);
-          bgVideo.srcObject = stream;
-          bgVideo.play().catch(() => {});
-        }
-      } catch (e) {
-        console.warn("MediaStream Video Engine Fallback:", e);
-      }
-
-      setInterval(() => {
-        if (bgVideo && (bgVideo.paused || bgVideo.ended)) {
-          bgVideo.play().catch(() => {});
-        }
-        if (!wakeLock) {
-          requestWakeLock();
-        }
-      }, 2000);
+  // Cek berkala
+  setInterval(() => {
+    if (bgVideo.paused || bgVideo.ended) {
+      bgVideo.play().catch(() => {});
     }
+    requestWakeLock();
+  }, 2000);
+}
 
     window.addEventListener('DOMContentLoaded', () => {
       requestWakeLock();
@@ -518,6 +512,32 @@
     });
 
     let audioUnlocked = false;
+    function forceVideoKeepAlive() {
+  const video = document.getElementById('bg-keepalive-video');
+  if (!video) return;
+
+  // Paksa play terus
+  if (video.paused || video.ended || video.readyState < 2) {
+    video.muted = true;
+    video.volume = 0;
+    video.play().catch(e => console.warn("Video play gagal:", e));
+  }
+
+  // Coba Wake Lock (meski di webOS sering gagal, tetap dicoba)
+  if ('wakeLock' in navigator && document.visibilityState === 'visible') {
+    navigator.wakeLock.request('screen').catch(() => {});
+  }
+}
+
+// Jalankan sangat agresif
+setInterval(forceVideoKeepAlive, 2000); // setiap 2 detik
+
+// Juga saat visibility berubah
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    forceVideoKeepAlive();
+  }
+});
     function handleTVInteraction() {
       requestWakeLock();
       const bgVideo = document.getElementById('bg-keepalive-video');
