@@ -151,8 +151,7 @@
          muted
          playsinline
          webkit-playsinline
-         class="fixed -bottom-10 -right-10 w-36 h-36 object-cover z-0 opacity-20 pointer-events-none">
-    <source src="keepalive.mp4" type="video/mp4">
+         style="position: fixed; bottom: 0; right: 0; width: 20px; height: 20px; opacity: 0.05; z-index: -1; pointer-events: none;">
     <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
   </video>
   
@@ -417,860 +416,922 @@
   </footer>
 
   <!-- JAVASCRIPT SYSTEM -->
-  <script>
-    window.onerror = function(message) {
-      console.warn("Minor Error terdeteksi di TV (Diabaikan):", message);
-      return true;
+<script>
+  window.onerror = function(message) {
+    console.warn("Minor Error terdeteksi di TV (Diabaikan):", message);
+    return true;
+  };
+
+  window.addEventListener('unhandledrejection', function(event) {
+    console.warn("Async Promise Rejection (Diabaikan):", event.reason);
+  });
+
+  window.addEventListener('online', () => {
+    fetchData();
+  });
+
+  // SILENT AUDIO ENGINE
+  let audioCtx = null;
+  let audioUnlocked = false;
+
+  function startSilentAudioEngine() {
+    if (audioCtx) return;
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        audioCtx = new AudioContext();
+        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        source.connect(audioCtx.destination);
+        source.start(0);
+        console.log("Silent Audio Engine Aktif (Screensaver TV Terkunci OFF)");
+      }
+    } catch (e) {
+      console.warn("Silent Audio Engine gagal diinisialisasi:", e);
+    }
+  }
+
+  // ROBUST HARDWARE KEEP-ALIVE ENGINE (DENGAN FALLBACK BASE64 OFFLINE)
+  const SILENT_VIDEO_BASE64 = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAAptZGF0AAACrgYF//+/3gAe2YgRACAAAD6AAB9gAAfQAAAAAMh2YWNjQzEAAQB4AB7/AAAAFHhoY2gxAAAAAAIAAAACAAAAAAAPbXZoZAAAAADcxIAAXMSAAAEAAAABAAAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAzB0cmFjawAAAAEAAADcxIAAXMSAAAEAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAC1dGtoZAAAAAEAAAAAxIAAXMSAAAEAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAABD21kaWEAAAAgbWRoZAAAAADcxIAAXMSAAAEAAAAAAAABAAAAAQAAAAAAAABoZGxyAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABbWluZgAAABR2aGtkAAAAAQAAAAAAAABAAAAAABRkaW5mAAAAHGRyZWYAAAAAAAEAAAAMdXJsIAAAAAEAAAEdc3RibAAAAGxzdHNkAAAAAAABAAAAgGF2YzEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAHAAsAEgAAABIAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY//8AAAAic3R0cwAAAAAAAAABAAAAAQAAAAEAAAAAAAABc3RzcwAAAAAAAAABAAAAAQAAABRzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAjc3RzeiAAAAAAAAAAAAAAAQAAAA4AAAAUc3RjbwAAAAAAAAABAAAAHAAAACJ1ZHRhAAAAInitiYWlidAAAAEAAAAAAAAAABAAAAAAA=";
+
+  let keepAliveVideo = null;
+
+  function setupVideoKeepAlive() {
+    keepAliveVideo = document.getElementById('bg-keepalive-video');
+    if (!keepAliveVideo) return;
+
+    keepAliveVideo.muted = true;
+    keepAliveVideo.volume = 0.0001;
+    keepAliveVideo.playsInline = true;
+
+    const forcePlay = () => {
+      keepAliveVideo.play().then(() => {
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.playbackState = 'playing';
+        }
+      }).catch(() => {});
     };
 
-    window.addEventListener('unhandledrejection', function(event) {
-      console.warn("Async Promise Rejection (Diabaikan):", event.reason);
-    });
-
-    window.addEventListener('online', () => {
-      fetchData();
-    });
-
-    // SILENT AUDIO ENGINE
-    let audioCtx = null;
-    let audioUnlocked = false; // DEKLARASI GLOBAL FIX
-
-    function startSilentAudioEngine() {
-      if (audioCtx) return;
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-          audioCtx = new AudioContext();
-          const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
-          const source = audioCtx.createBufferSource();
-          source.buffer = buffer;
-          source.loop = true;
-          source.connect(audioCtx.destination);
-          source.start(0);
-          console.log("Silent Audio Engine Aktif (Screensaver TV Terkunci OFF)");
-        }
-      } catch (e) {
-        console.warn("Silent Audio Engine gagal diinisialisasi:", e);
-      }
-    }
-
-    // ROBUST HARDWARE KEEP-ALIVE ENGINE (BASE64 H.264 VIDEO)
-    const SILENT_VIDEO_BASE64 = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAAptZGF0AAACrgYF//+/3gAe2YgRACAAAD6AAB9gAAfQAAAAAMh2YWNjQzEAAQB4AB7/AAAAFHhoY2gxAAAAAAIAAAACAAAAAAAPbXZoZAAAAADcxIAAXMSAAAEAAAABAAAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAzB0cmFjawAAAAEAAADcxIAAXMSAAAEAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAC1dGtoZAAAAAEAAAAAxIAAXMSAAAEAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAABD21kaWEAAAAgbWRoZAAAAADcxIAAXMSAAAEAAAAAAAABAAAAAQAAAAAAAABoZGxyAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABbWluZgAAABR2aGtkAAAAAQAAAAAAAABAAAAAABRkaW5mAAAAHGRyZWYAAAAAAAEAAAAMdXJsIAAAAAEAAAEdc3RibAAAAGxzdHNkAAAAAAABAAAAgGF2YzEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAHAAsAEgAAABIAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY//8AAAAic3R0cwAAAAAAAAABAAAAAQAAAAEAAAAAAAABc3RzcwAAAAAAAAABAAAAAQAAABRzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAjc3RzeiAAAAAAAAAAAAAAAQAAAA4AAAAUc3RjbwAAAAAAAAABAAAAHAAAACJ1ZHRhAAAAInitiYWlidAAAAEAAAAAAAAAABAAAAAAA=";
-
-    let keepAliveVideo = null;
-
-    function setupVideoKeepAlive() {
-      keepAliveVideo = document.getElementById('bg-keepalive-video');
-      if (!keepAliveVideo) return;
-
+    keepAliveVideo.addEventListener('ended', forcePlay);
+    keepAliveVideo.addEventListener('pause', () => setTimeout(forcePlay, 1000));
+    
+    keepAliveVideo.addEventListener('error', () => {
+      console.warn("Video Keep-Alive online error, mengalihkan ke fallback Base64...");
       keepAliveVideo.src = SILENT_VIDEO_BASE64;
-      keepAliveVideo.muted = true;
-      keepAliveVideo.volume = 0.0001;
-      keepAliveVideo.playsInline = true;
-
-      const forcePlay = () => {
-        keepAliveVideo.play().then(() => {
-          if ('mediaSession' in navigator) {
-            navigator.mediaSession.playbackState = 'playing';
-          }
-        }).catch(() => {});
-      };
-
-      keepAliveVideo.addEventListener('ended', forcePlay);
-      keepAliveVideo.addEventListener('pause', () => setTimeout(forcePlay, 1000));
-      keepAliveVideo.addEventListener('error', () => {
-        keepAliveVideo.src = SILENT_VIDEO_BASE64;
-        forcePlay();
-      });
-
       forcePlay();
-    }
-
-    setInterval(() => {
-      if (keepAliveVideo && keepAliveVideo.paused) {
-        keepAliveVideo.play().catch(() => {});
-      }
-    }, 5000);
-
-    // NATIVE SCREEN WAKE LOCK ENGINE
-    let wakeLock = null;
-
-    async function requestScreenWakeLock() {
-      try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await navigator.wakeLock.request('screen');
-          console.log('Screen Wake Lock Aktif (TV Terkunci OFF)');
-          
-          wakeLock.addEventListener('release', () => {
-            console.warn('Wake Lock terlepas, mencoba mengunci kembali...');
-            setTimeout(requestScreenWakeLock, 1000);
-          });
-        }
-      } catch (err) {
-        console.warn(`Wake Lock Error: ${err.name}, ${err.message}`);
-      }
-    }
-
-    document.addEventListener('visibilitychange', () => {
-      if (wakeLock !== null && document.visibilityState === 'visible') {
-        requestScreenWakeLock();
-      }
     });
 
-    window.addEventListener('DOMContentLoaded', () => {
-      setupVideoKeepAlive();
+    forcePlay();
+  }
+
+  setInterval(() => {
+    if (keepAliveVideo && keepAliveVideo.paused) {
+      keepAliveVideo.play().catch(() => {});
+    }
+  }, 5000);
+
+  // NATIVE SCREEN WAKE LOCK ENGINE
+  let wakeLock = null;
+
+  async function requestScreenWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Screen Wake Lock Aktif');
+        
+        wakeLock.addEventListener('release', () => {
+          setTimeout(requestScreenWakeLock, 1000);
+        });
+      }
+    } catch (err) {
+      console.warn(`Wake Lock Error: ${err.name}, ${err.message}`);
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
       requestScreenWakeLock();
-    });
+    }
+  });
 
-    function handleTVInteraction() {
-      startSilentAudioEngine();
-      requestScreenWakeLock();
-      
-      if (keepAliveVideo && keepAliveVideo.paused) {
-        keepAliveVideo.play().catch(() => {});
-      }
-      
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }
+  window.addEventListener('DOMContentLoaded', () => {
+    setupVideoKeepAlive();
+    requestScreenWakeLock();
+  });
 
-      if (!audioUnlocked) {
-        const audio = document.getElementById('audio-adzan');
-        if (audio) {
-          audio.play().then(() => {
-            audio.pause();
-            audio.currentTime = 0;
-            audioUnlocked = true;
-            const banner = document.getElementById('banner-audio-notice');
-            if (banner) banner.style.display = 'none';
-          }).catch(() => {});
-        }
-      }
+  function handleTVInteraction() {
+    startSilentAudioEngine();
+    requestScreenWakeLock();
+    
+    if (keepAliveVideo && keepAliveVideo.paused) {
+      keepAliveVideo.play().catch(() => {});
+    }
+    
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
     }
 
-    window.addEventListener('click', handleTVInteraction);
-    window.addEventListener('keydown', handleTVInteraction);
-    window.addEventListener('touchstart', handleTVInteraction);
-
-    // FALAK MANDIRI DATABASE
-    const DATABASE_BULAN = {
-      4:  { nama: "April",     buruj: 0,  tafawut: 10, dBuruj: 0,  arah: "UTARA" },
-      5:  { nama: "Mei",       buruj: 1,  tafawut: 9,  dBuruj: 30, arah: "UTARA" },
-      6:  { nama: "Juni",      buruj: 2,  tafawut: 9,  dBuruj: 60, arah: "UTARA" },
-      7:  { nama: "Juli",      buruj: 3,  tafawut: 7,  dBuruj: 0,  arah: "UTARA" },
-      8:  { nama: "Agustus",   buruj: 4,  tafawut: 7,  dBuruj: 30, arah: "UTARA" },
-      9:  { nama: "September", buruj: 5,  tafawut: 7,  dBuruj: 60, arah: "UTARA" },
-      10: { nama: "Oktober",   buruj: 6,  tafawut: 6,  dBuruj: 0,  arah: "SELATAN" },
-      11: { nama: "Nopember",  buruj: 7,  tafawut: 7,  dBuruj: 30, arah: "SELATAN" },
-      12: { nama: "Desember",  buruj: 8,  tafawut: 7,  dBuruj: 60, arah: "SELATAN" },
-      1:  { nama: "Januari",   buruj: 9,  tafawut: 9,  dBuruj: 0,  arah: "SELATAN" },
-      2:  { nama: "Februari",  buruj: 10, tafawut: 10, dBuruj: 30, arah: "SELATAN" },
-      3:  { nama: "Maret",     buruj: 11, tafawut: 8,  dBuruj: 60, arah: "SELATAN" }
-    };
-
-    const BURUJ_LOOKUP = [
-      { dBuruj: 0,  arah: "UTARA" }, { dBuruj: 30, arah: "UTARA" }, { dBuruj: 60, arah: "UTARA" },
-      { dBuruj: 0,  arah: "UTARA" }, { dBuruj: 30, arah: "UTARA" }, { dBuruj: 60, arah: "UTARA" },
-      { dBuruj: 0,  arah: "SELATAN" }, { dBuruj: 30, arah: "SELATAN" }, { dBuruj: 60, arah: "SELATAN" },
-      { dBuruj: 0,  arah: "SELATAN" }, { dBuruj: 30, arah: "SELATAN" }, { dBuruj: 60, arah: "SELATAN" }
-    ];
-
-    function calcLogSin(deg) { const r = (deg * Math.PI) / 180, v = Math.abs(Math.sin(r)); return v === 0 ? 0 : 10 + Math.log10(v); }
-    function calcLogCos(deg) { const r = (deg * Math.PI) / 180, v = Math.abs(Math.cos(r)); return v === 0 ? 0 : 10 + Math.log10(v); }
-    function calcSin(deg) { return Math.sin((deg * Math.PI) / 180); }
-    function calcCos(deg) { return Math.cos((deg * Math.PI) / 180); }
-    function calcCot(deg) { return 1 / Math.tan((deg * Math.PI) / 180); }
-
-    function invLogSin(logVal) {
-      let target = Math.round(logVal * 1e5) / 1e5, bestD = 0, bestM = 0;
-      for (let d = 0; d < 90; d++) {
-        for (let m = 0; m < 60; m++) {
-          if (Math.round(calcLogSin(d + m / 60) * 1e5) / 1e5 <= target) { bestD = d; bestM = m; }
-        }
-      }
-      return { deg: bestD, min: bestM };
-    }
-
-    function invSin(sinVal) {
-      let target = Math.round(sinVal * 1e5) / 1e5, bestD = 0, bestM = 0;
-      for (let d = 0; d < 90; d++) {
-        for (let m = 0; m < 60; m++) {
-          if (Math.round(calcSin(d + m / 60) * 1e5) / 1e5 <= target) { bestD = d; bestM = m; }
-        }
-      }
-      return { deg: bestD, min: bestM };
-    }
-
-    function invCot(cotVal) {
-      let target = Math.round(cotVal * 1e5) / 1e5;
-      for (let d = 1; d < 90; d++) {
-        for (let m = 0; m < 60; m++) {
-          if (Math.round(calcCot(d + m / 60) * 1e5) / 1e5 <= target) return { deg: d, min: m };
-        }
-      }
-      return { deg: 89, min: 59 };
-    }
-
-    function addDms(d1, m1, d2, m2) {
-      let total = (d1 * 60 + m1) + (d2 * 60 + m2);
-      return { deg: Math.floor(total / 60), min: total % 60 };
-    }
-
-    function subDms(d1, m1, d2, m2) {
-      let total = (d1 * 60 + m1) - (d2 * 60 + m2);
-      if (total < 0) total += 360 * 60;
-      return { deg: Math.floor(total / 60), min: total % 60 };
-    }
-
-    function convertLattice4(deg, min) {
-      let minMult = min * 4, minCarry = Math.floor(minMult / 60), minRem = minMult % 60;
-      let degMult = deg * 4, degCarry = Math.floor(degMult / 60), degRem = degMult % 60;
-      let detik = minRem, menitSum = minCarry + degRem;
-      let jamCarry = Math.floor(menitSum / 60), menit = menitSum % 60, jam = (degCarry + jamCarry) % 24;
-      return { jam, menit, detik };
-    }
-
-    function addIhtiyathMinutes(jam, menit, minsToAdd = 3) {
-      let total = jam * 60 + menit + minsToAdd;
-      total = (total + 1440) % 1440;
-      const pad = n => String(n).padStart(2, '0');
-      return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
-    }
-
-    function hitungWaktuSholatFalak(dateObj = new Date(), latDeg = 7, latMin = 39, latArah = "SELATAN") {
-      const tglInput = dateObj.getDate();
-      const blnInput = dateObj.getMonth() + 1;
-      const refBulan = DATABASE_BULAN[blnInput] || DATABASE_BULAN[1];
-      const R = {};
-
-      R.tgl = tglInput; R.tafawut = refBulan.tafawut; R.burujAwal = refBulan.buruj;
-      let sumSyams = R.tgl + R.tafawut;
-      let burujTambah = sumSyams > 30 ? 1 : 0;
-      R.darajahSyams = sumSyams > 30 ? sumSyams - 30 : sumSyams;
-      R.burujAkhir = (R.burujAwal + burujTambah) % 12;
-
-      R.darajahBuruj = BURUJ_LOOKUP[R.burujAkhir].dBuruj;
-      R.arahAkhir = BURUJ_LOOKUP[R.burujAkhir].arah;
-      R.majmuah = R.darajahSyams + R.darajahBuruj;
-      R.qaidah90 = 90;
-
-      const golDirect = [0, 1, 2, 6, 7, 8];
-      R.budDarajah = golDirect.includes(R.burujAkhir) ? R.majmuah : R.qaidah90 - R.majmuah;
-
-      R.logSinBud = calcLogSin(R.budDarajah);
-      R.logSinMaylAzham = 9.59983;
-
-      let totalLogSin1 = R.logSinBud + R.logSinMaylAzham;
-      if (totalLogSin1 >= 10) totalLogSin1 -= 10;
-      R.logSinMaylAwwal = totalLogSin1;
-
-      const maylAwwalDms = invLogSin(R.logSinMaylAwwal);
-      R.maylAwwalDeg = maylAwwalDms.deg; R.maylAwwalMin = maylAwwalDms.min;
-
-      R.latDeg = latDeg; R.latMin = latMin; R.latArah = latArah;
-      R.isArahSama = (R.arahAkhir === R.latArah);
-
-      if (R.isArahSama) {
-        let m1 = R.maylAwwalDeg * 60 + R.maylAwwalMin;
-        let m2 = R.latDeg * 60 + R.latMin;
-        let diff = Math.abs(m1 - m2);
-        R.tamamGhayahDeg = Math.floor(diff / 60); R.tamamGhayahMin = diff % 60;
-      } else {
-        let res = addDms(R.maylAwwalDeg, R.maylAwwalMin, R.latDeg, R.latMin);
-        R.tamamGhayahDeg = res.deg; R.tamamGhayahMin = res.min;
-      }
-
-      let ghayahRes = subDms(90, 0, R.tamamGhayahDeg, R.tamamGhayahMin);
-      R.ghayahIrtifaDeg = ghayahRes.deg; R.ghayahIrtifaMin = ghayahRes.min;
-
-      R.logSinArdhBalad = calcLogSin(R.latDeg + R.latMin / 60);
-      let sumLogQutr = R.logSinMaylAwwal + R.logSinArdhBalad;
-      if (sumLogQutr >= 10) sumLogQutr -= 10;
-      R.logSinBudQutr = sumLogQutr;
-      const budQutrDms = invLogSin(R.logSinBudQutr);
-      R.budQutrDeg = budQutrDms.deg; R.budQutrMin = budQutrDms.min;
-
-      R.logCosMaylAwwal = calcLogCos(R.maylAwwalDeg + R.maylAwwalMin / 60);
-      R.logCosArdhBalad = calcLogCos(R.latDeg + R.latMin / 60);
-      let sumLogAsl = R.logCosMaylAwwal + R.logCosArdhBalad;
-      if (sumLogAsl >= 10) sumLogAsl -= 10;
-      R.logSinAslMutlaq = sumLogAsl;
-
-      R.logSinNishfFadhlah = (R.logSinBudQutr + 10) - R.logSinAslMutlaq;
-      const nishfFadhlahDms = invLogSin(R.logSinNishfFadhlah);
-      R.nishfFadhlahDeg = nishfFadhlahDms.deg; R.nishfFadhlahMin = nishfFadhlahDms.min;
-
-      R.sinQaus1 = 0.00975; R.sinBudQutr = calcSin(R.budQutrDeg + R.budQutrMin / 60);
-      R.sinMujtama1 = R.sinQaus1 + R.sinBudQutr;
-      const mujtama1Dms = invSin(R.sinMujtama1);
-      R.logSinMujtama1 = calcLogSin(mujtama1Dms.deg + mujtama1Dms.min / 60);
-      R.logSinBaqi1 = (R.logSinMujtama1 + 10) - R.logSinAslMutlaq;
-      const baqi1Dms = invLogSin(R.logSinBaqi1);
-      let ikhtilafRes = subDms(baqi1Dms.deg, baqi1Dms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
-
-      R.sinQaus2 = 0.00436; R.sinMujtama2 = R.sinQaus2 + R.sinBudQutr;
-      const mujtama2Dms = invSin(R.sinMujtama2);
-      R.logSinMujtama2 = calcLogSin(mujtama2Dms.deg + mujtama2Dms.min / 60);
-      R.logSinBaqi2 = (R.logSinMujtama2 + 10) - R.logSinAslMutlaq;
-      const baqi2Dms = invLogSin(R.logSinBaqi2);
-      let qutrSyamsRes = subDms(baqi2Dms.deg, baqi2Dms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
-      let tamkiniyahRes = addDms(qutrSyamsRes.deg, qutrSyamsRes.min, ikhtilafRes.deg, ikhtilafRes.min);
-
-      R.qausHaqiqiRes = R.isArahSama ? addDms(90, 0, R.nishfFadhlahDeg, R.nishfFadhlahMin) : subDms(90, 0, R.nishfFadhlahDeg, R.nishfFadhlahMin);
-      R.qausMaraiRes = addDms(R.qausHaqiqiRes.deg, R.qausHaqiqiRes.min, tamkiniyahRes.deg, tamkiniyahRes.min);
-      const maghribBox = convertLattice4(R.qausMaraiRes.deg, R.qausMaraiRes.min);
-
-      R.logSinIsyaPaten = 9.46594;
-      R.logSinBaqiIsya = (R.logSinIsyaPaten + 10) - R.logSinAslMutlaq;
-      const baqiIsyaDms = invLogSin(R.logSinBaqiIsya);
-      R.sinBaqiIsya = calcSin(baqiIsyaDms.deg + baqiIsyaDms.min / 60);
-      R.sinNishfFadhlah = calcSin(R.nishfFadhlahDeg + R.nishfFadhlahMin / 60);
-      R.sinHasilIsya = R.isArahSama ? (R.sinBaqiIsya + R.sinNishfFadhlah) : (R.sinBaqiIsya - R.sinNishfFadhlah);
-      const hasilIsyaDms = invSin(R.sinHasilIsya);
-      let resIsya = R.isArahSama ? subDms(hasilIsyaDms.deg, hasilIsyaDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin) : addDms(hasilIsyaDms.deg, hasilIsyaDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
-      let awalIsyaRes = addDms(resIsya.deg, resIsya.min, R.qausMaraiRes.deg, R.qausMaraiRes.min);
-      const isyaBox = convertLattice4(awalIsyaRes.deg, awalIsyaRes.min);
-
-      R.logSinSubhPaten = 9.51264;
-      R.logSinBaqiSubh = (R.logSinSubhPaten + 10) - R.logSinAslMutlaq;
-      const baqiSubhDms = invLogSin(R.logSinBaqiSubh);
-      R.sinBaqiSubh = calcSin(baqiSubhDms.deg + baqiSubhDms.min / 60);
-      R.sinHasilSubh = R.isArahSama ? (R.sinBaqiSubh + R.sinNishfFadhlah) : (R.sinBaqiSubh - R.sinNishfFadhlah);
-      const hasilSubhDms = invSin(R.sinHasilSubh);
-      let resSubh = R.isArahSama ? subDms(hasilSubhDms.deg, hasilSubhDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin) : addDms(hasilSubhDms.deg, hasilSubhDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
-      let qausThuluRes = subDms(180, 0, R.qausMaraiRes.deg, R.qausMaraiRes.min);
-      let totalMinLail = qausThuluRes.deg * 60 + qausThuluRes.min;
-      let totalMinFajr = resSubh.deg * 60 + resSubh.min;
-      let diffSubhMin = Math.abs(totalMinLail - totalMinFajr);
-      const subhBox = convertLattice4(Math.floor(diffSubhMin / 60), diffSubhMin % 60);
-
-      R.cotGhayahIrtifa = calcCot(R.ghayahIrtifaDeg + R.ghayahIrtifaMin / 60);
-      R.cotIrtifaAsr = R.cotGhayahIrtifa + 1.00000;
-      const irtifaAsrDms = invCot(R.cotIrtifaAsr);
-      R.sinIrtifaAsr = calcSin(irtifaAsrDms.deg + irtifaAsrDms.min / 60);
-      R.sinBudQutrAsr = calcSin(R.budQutrDeg + R.budQutrMin / 60);
-      R.sinMuaddalAsr = R.isArahSama ? (R.sinIrtifaAsr - R.sinBudQutrAsr) : (R.sinIrtifaAsr + R.sinBudQutrAsr);
-      const muaddalAsrDms = invSin(R.sinMuaddalAsr);
-      R.logSinMuaddalAsr = calcLogSin(muaddalAsrDms.deg + muaddalAsrDms.min / 60);
-      R.logSinTamamFadhlAsr = (R.logSinMuaddalAsr + 10) - R.logSinAslMutlaq;
-      const tamamFadhlAsrDms = invLogSin(R.logSinTamamFadhlAsr);
-
-      let rawAsrDeg = tamamFadhlAsrDms.deg + tamamFadhlAsrDms.min / 60;
-      let finalAsrDegFloat = (rawAsrDeg < 45) ? (90 - rawAsrDeg) : rawAsrDeg;
-      let fAsrDeg = Math.floor(finalAsrDegFloat);
-      let fAsrMin = Math.round((finalAsrDegFloat - fAsrDeg) * 60);
-      if (fAsrMin === 60) { fAsrDeg += 1; fAsrMin = 0; }
-      const asrBox = convertLattice4(fAsrDeg, fAsrMin);
-
-      const syuruqBox = convertLattice4(Math.floor(totalMinLail / 60), totalMinLail % 60);
-
-      return {
-        subuh:   addIhtiyathMinutes(subhBox.jam, subhBox.menit, 3),
-        syuruq:  addIhtiyathMinutes(syuruqBox.jam, syuruqBox.menit, 0),
-        dzuhur:  "12:04",
-        ashar:   addIhtiyathMinutes((asrBox.jam + 12) % 24, asrBox.menit, 3),
-        maghrib: addIhtiyathMinutes((maghribBox.jam + 12) % 24, maghribBox.menit, 3),
-        isya:    addIhtiyathMinutes((isyaBox.jam + 12) % 24, isyaBox.menit, 3)
-      };
-    }
-
-    // DASHBOARD REALTIME ENGINE
-    const API_URL = "https://script.google.com/macros/s/AKfycbydTT9GCsR3pddbEeHfeDOdKq_w6SkG8AsmgsK1EHT9L2HnUSJ2nraaTbTHsoK68kl2/exec";
-    const LONGITUDE = 112.836500;
-    const LATITUDE = -7.65;
-
-    let rawData = JSON.parse(localStorage.getItem('jadwal_signage_cache') || 'null');
-    let currentJadwalIndex = 0;
-    let activeJadwalList = [];
-    let isIdleTomorrowMode = false;
-    let coverflowTimer = null;
-    let lastRenderedKey = "";
-    let lastSummaryKey = "";
-    let lastReloadHour = "";
-    let preAdzanActive = false;
-    let adzanActive = false;
-    let lastAdzanTriggeredTime = "";
-
-    let isBreakModeActive = false;
-    let isWipingExit = false;
-
-    function cleanDayStr(val) {
-      return String(val || '').trim().toUpperCase().replace(/[^A-Z]/g, '');
-    }
-
-    async function fetchRealWeather() {
-      try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LATITUDE}&longitude=${LONGITUDE}&current_weather=true&relative_humidity_2m=true`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data && data.current_weather) {
-          const temp = Math.round(data.current_weather.temperature);
-          document.getElementById('weather-text').innerText = `${temp}°C`;
-          
-          const breakTemp = document.getElementById('break-weather-temp');
-          if (breakTemp) breakTemp.innerText = `${temp}°C`;
-
-          const breakWind = document.getElementById('break-wind');
-          if (breakWind) breakWind.innerText = `${data.current_weather.windspeed || 12} km/jam`;
-        }
-      } catch (e) {
-        console.warn("Weather fetch error:", e);
-      }
-    }
-    setInterval(fetchRealWeather, 600000);
-    fetchRealWeather();
-
-    function updateAutoTheme(nowHour) {
-      if (nowHour >= 18 || nowHour < 5) {
-        if (!document.body.classList.contains('dark-mode')) {
-          document.body.classList.add('dark-mode');
-        }
-      } else {
-        if (document.body.classList.contains('dark-mode')) {
-          document.body.classList.remove('dark-mode');
-        }
-      }
-    }
-
-    function showPreAdzanScreen(namaSholat, diffSec) {
-      preAdzanActive = true;
-      const modal = document.getElementById('modal-pre-adzan');
-      const namaEl = document.getElementById('nama-sholat-pre-adzan');
-      const countEl = document.getElementById('countdown-pre-adzan');
-
-      if (namaEl) namaEl.innerText = namaSholat;
-      const m = String(Math.floor(diffSec / 60)).padStart(2, '0');
-      const s = String(diffSec % 60).padStart(2, '0');
-      if (countEl) countEl.innerText = `Adzan berkumandang dalam: ${m}:${s}`;
-
-      if (modal && modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-      }
-    }
-
-    function hidePreAdzanScreen() {
-      preAdzanActive = false;
-      const modal = document.getElementById('modal-pre-adzan');
-      if (modal) {
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-      }
-    }
-
-    function updateHeaderPrayerRibbon() {
-      const now = new Date();
-      const istiwaNow = getIstiwaTime(now);
-      const p = hitungWaktuSholatFalak(now);
-      if (!p) return;
-
-      updateAutoTheme(istiwaNow.getHours());
-
-      document.getElementById('time-subuh').innerText = p.subuh;
-      document.getElementById('time-dzuhur').innerText = p.dzuhur;
-      document.getElementById('time-ashar').innerText = p.ashar;
-      document.getElementById('time-maghrib').innerText = p.maghrib;
-      document.getElementById('time-isya').innerText = p.isya;
-
-      const breakSubuh = document.getElementById('break-sholat-subuh');
-      if (breakSubuh) breakSubuh.innerText = p.subuh;
-      const breakSyuruq = document.getElementById('break-sholat-syuruq');
-      if (breakSyuruq) breakSyuruq.innerText = p.syuruq || '05:30';
-      const breakDzuhur = document.getElementById('break-sholat-dzuhur');
-      if (breakDzuhur) breakDzuhur.innerText = p.dzuhur;
-      const breakAshar = document.getElementById('break-sholat-ashar');
-      if (breakAshar) breakAshar.innerText = p.ashar;
-      const breakMaghrib = document.getElementById('break-sholat-maghrib');
-      if (breakMaghrib) breakMaghrib.innerText = p.maghrib;
-      const breakIsya = document.getElementById('break-sholat-isya');
-      if (breakIsya) breakIsya.innerText = p.isya;
-
-      const diffMs = istiwaNow.getTime() - now.getTime();
-      const diffTotalSec = Math.abs(Math.floor(diffMs / 1000));
-      const diffMin = Math.floor(diffTotalSec / 60);
-      const diffSec = diffTotalSec % 60;
-      const signStr = diffMs >= 0 ? '+' : '-';
-      const breakDiffEl = document.getElementById('break-time-diff');
-      if (breakDiffEl) {
-        breakDiffEl.innerText = `${signStr}${diffMin} Menit ${diffSec} Detik`;
-      }
-
-      const formatHM = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-      const nowIstiwaHM = formatHM(istiwaNow);
-
-      const listSholat = [
-        { id: 'box-subuh', name: 'SUBUH', time: p.subuh },
-        { id: 'box-dzuhur', name: 'DZUHUR', time: p.dzuhur },
-        { id: 'box-ashar', name: 'ASHAR', time: p.ashar },
-        { id: 'box-maghrib', name: 'MAGHRIB', time: p.maghrib },
-        { id: 'box-isya', name: 'ISYA', time: p.isya }
-      ];
-
-      const currentIstiwaSec = istiwaNow.getHours() * 3600 + istiwaNow.getMinutes() * 60 + istiwaNow.getSeconds();
-      let nextSholatObj = null;
-      let diffSecPrayer = 0;
-
-      for (let s of listSholat) {
-        const parts = s.time.split(':');
-        const pSec = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60;
-        if (pSec > currentIstiwaSec) {
-          nextSholatObj = s;
-          diffSecPrayer = pSec - currentIstiwaSec;
-          break;
-        }
-      }
-
-      if (!nextSholatObj) {
-        nextSholatObj = listSholat[0];
-        const parts = nextSholatObj.time.split(':');
-        const pSec = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60;
-        diffSecPrayer = (24 * 3600 - currentIstiwaSec) + pSec;
-      }
-
-      const cdH = String(Math.floor(diffSecPrayer / 3600)).padStart(2, '0');
-      const cdM = String(Math.floor((diffSecPrayer % 3600) / 60)).padStart(2, '0');
-      const cdS = String(diffSecPrayer % 60).padStart(2, '0');
-
-      const nameEl = document.getElementById('next-prayer-name');
-      const countEl = document.getElementById('next-prayer-countdown');
-      if (nameEl) nameEl.innerText = `⏳ MENJELANG ${nextSholatObj.name}`;
-      if (countEl) countEl.innerText = `-${cdH}:${cdM}:${cdS}`;
-
-      listSholat.forEach(s => {
-        const box = document.getElementById(s.id);
-        if (box) {
-          if (s.id === nextSholatObj.id) {
-            box.className = "px-3 py-1.5 rounded-xl text-center border bg-emerald-800 text-white shadow-md shadow-emerald-900/30 font-bold scale-105 transition-all";
-            box.querySelector('span').className = "text-[9px] font-extrabold text-emerald-100 uppercase block tracking-wider";
-            box.querySelector('span:nth-child(2)').className = "text-sm font-black text-white";
-          } else {
-            box.className = "px-3 py-1.5 rounded-xl text-center border border-transparent transition";
-            box.querySelector('span').className = "text-[9px] font-extrabold text-emerald-900 uppercase block tracking-wider";
-            box.querySelector('span:nth-child(2)').className = "text-sm font-black text-slate-800";
-          }
-        }
-      });
-
-      if (diffSecPrayer <= 60 && diffSecPrayer > 0 && !adzanActive) {
-        showPreAdzanScreen(nextSholatObj.name, diffSecPrayer);
-      } else if (preAdzanActive && (diffSecPrayer > 60 || diffSecPrayer <= 0)) {
-        hidePreAdzanScreen();
-      }
-
-      if (!adzanActive && lastAdzanTriggeredTime !== nowIstiwaHM) {
-        const matchingSholat = listSholat.find(s => s.time === nowIstiwaHM);
-        if (matchingSholat) {
-          lastAdzanTriggeredTime = nowIstiwaHM;
-          hidePreAdzanScreen();
-          triggerAdzanScreen(matchingSholat.name);
-        }
-      }
-    }
-
-    function triggerAdzanScreen(namaSholat) {
-      adzanActive = true;
-      const modal = document.getElementById('modal-adzan');
-      document.getElementById('nama-sholat-adzan').innerText = namaSholat;
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-
+    if (!audioUnlocked) {
       const audio = document.getElementById('audio-adzan');
-      const countdownEl = document.getElementById('countdown-adzan');
-      let cdInterval = null;
-
-      function closeAdzanModal() {
-        if (cdInterval) clearInterval(cdInterval);
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-        if (audio) {
+      if (audio) {
+        audio.play().then(() => {
           audio.pause();
           audio.currentTime = 0;
-          audio.onended = null;
-        }
-        adzanActive = false;
+          audioUnlocked = true;
+          const banner = document.getElementById('banner-audio-notice');
+          if (banner) banner.style.display = 'none';
+        }).catch(() => {});
       }
+    }
+  }
 
+  window.addEventListener('click', handleTVInteraction);
+  window.addEventListener('keydown', handleTVInteraction);
+  window.addEventListener('touchstart', handleTVInteraction);
+
+  // FALAK MANDIRI DATABASE
+  const DATABASE_BULAN = {
+    4:  { nama: "April",     buruj: 0,  tafawut: 10, dBuruj: 0,  arah: "UTARA" },
+    5:  { nama: "Mei",       buruj: 1,  tafawut: 9,  dBuruj: 30, arah: "UTARA" },
+    6:  { nama: "Juni",      buruj: 2,  tafawut: 9,  dBuruj: 60, arah: "UTARA" },
+    7:  { nama: "Juli",      buruj: 3,  tafawut: 7,  dBuruj: 0,  arah: "UTARA" },
+    8:  { nama: "Agustus",   buruj: 4,  tafawut: 7,  dBuruj: 30, arah: "UTARA" },
+    9:  { nama: "September", buruj: 5,  tafawut: 7,  dBuruj: 60, arah: "UTARA" },
+    10: { nama: "Oktober",   buruj: 6,  tafawut: 6,  dBuruj: 0,  arah: "SELATAN" },
+    11: { nama: "Nopember",  buruj: 7,  tafawut: 7,  dBuruj: 30, arah: "SELATAN" },
+    12: { nama: "Desember",  buruj: 8,  tafawut: 7,  dBuruj: 60, arah: "SELATAN" },
+    1:  { nama: "Januari",   buruj: 9,  tafawut: 9,  dBuruj: 0,  arah: "SELATAN" },
+    2:  { nama: "Februari",  buruj: 10, tafawut: 10, dBuruj: 30, arah: "SELATAN" },
+    3:  { nama: "Maret",     buruj: 11, tafawut: 8,  dBuruj: 60, arah: "SELATAN" }
+  };
+
+  const BURUJ_LOOKUP = [
+    { dBuruj: 0,  arah: "UTARA" }, { dBuruj: 30, arah: "UTARA" }, { dBuruj: 60, arah: "UTARA" },
+    { dBuruj: 0,  arah: "UTARA" }, { dBuruj: 30, arah: "UTARA" }, { dBuruj: 60, arah: "UTARA" },
+    { dBuruj: 0,  arah: "SELATAN" }, { dBuruj: 30, arah: "SELATAN" }, { dBuruj: 60, arah: "SELATAN" },
+    { dBuruj: 0,  arah: "SELATAN" }, { dBuruj: 30, arah: "SELATAN" }, { dBuruj: 60, arah: "SELATAN" }
+  ];
+
+  function calcLogSin(deg) { const r = (deg * Math.PI) / 180, v = Math.abs(Math.sin(r)); return v === 0 ? 0 : 10 + Math.log10(v); }
+  function calcLogCos(deg) { const r = (deg * Math.PI) / 180, v = Math.abs(Math.cos(r)); return v === 0 ? 0 : 10 + Math.log10(v); }
+  function calcSin(deg) { return Math.sin((deg * Math.PI) / 180); }
+  function calcCos(deg) { return Math.cos((deg * Math.PI) / 180); }
+  function calcCot(deg) { return 1 / Math.tan((deg * Math.PI) / 180); }
+
+  function invLogSin(logVal) {
+    let target = Math.round(logVal * 1e5) / 1e5, bestD = 0, bestM = 0;
+    for (let d = 0; d < 90; d++) {
+      for (let m = 0; m < 60; m++) {
+        if (Math.round(calcLogSin(d + m / 60) * 1e5) / 1e5 <= target) { bestD = d; bestM = m; }
+      }
+    }
+    return { deg: bestD, min: bestM };
+  }
+
+  function invSin(sinVal) {
+    let target = Math.round(sinVal * 1e5) / 1e5, bestD = 0, bestM = 0;
+    for (let d = 0; d < 90; d++) {
+      for (let m = 0; m < 60; m++) {
+        if (Math.round(calcSin(d + m / 60) * 1e5) / 1e5 <= target) { bestD = d; bestM = m; }
+      }
+    }
+    return { deg: bestD, min: bestM };
+  }
+
+  function invCot(cotVal) {
+    let target = Math.round(cotVal * 1e5) / 1e5;
+    for (let d = 1; d < 90; d++) {
+      for (let m = 0; m < 60; m++) {
+        if (Math.round(calcCot(d + m / 60) * 1e5) / 1e5 <= target) return { deg: d, min: m };
+      }
+    }
+    return { deg: 89, min: 59 };
+  }
+
+  function addDms(d1, m1, d2, m2) {
+    let total = (d1 * 60 + m1) + (d2 * 60 + m2);
+    return { deg: Math.floor(total / 60), min: total % 60 };
+  }
+
+  function subDms(d1, m1, d2, m2) {
+    let total = (d1 * 60 + m1) - (d2 * 60 + m2);
+    if (total < 0) total += 360 * 60;
+    return { deg: Math.floor(total / 60), min: total % 60 };
+  }
+
+  function convertLattice4(deg, min) {
+    let minMult = min * 4, minCarry = Math.floor(minMult / 60), minRem = minMult % 60;
+    let degMult = deg * 4, degCarry = Math.floor(degMult / 60), degRem = degMult % 60;
+    let detik = minRem, menitSum = minCarry + degRem;
+    let jamCarry = Math.floor(menitSum / 60), menit = menitSum % 60, jam = (degCarry + jamCarry) % 24;
+    return { jam, menit, detik };
+  }
+
+  function addIhtiyathMinutes(jam, menit, minsToAdd = 3) {
+    let total = jam * 60 + menit + minsToAdd;
+    total = (total + 1440) % 1440;
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
+  }
+
+  function hitungWaktuSholatFalak(dateObj = new Date(), latDeg = 7, latMin = 39, latArah = "SELATAN") {
+    const tglInput = dateObj.getDate();
+    const blnInput = dateObj.getMonth() + 1;
+    const refBulan = DATABASE_BULAN[blnInput] || DATABASE_BULAN[1];
+    const R = {};
+
+    R.tgl = tglInput; R.tafawut = refBulan.tafawut; R.burujAwal = refBulan.buruj;
+    let sumSyams = R.tgl + R.tafawut;
+    let burujTambah = sumSyams > 30 ? 1 : 0;
+    R.darajahSyams = sumSyams > 30 ? sumSyams - 30 : sumSyams;
+    R.burujAkhir = (R.burujAwal + burujTambah) % 12;
+
+    R.darajahBuruj = BURUJ_LOOKUP[R.burujAkhir].dBuruj;
+    R.arahAkhir = BURUJ_LOOKUP[R.burujAkhir].arah;
+    R.majmuah = R.darajahSyams + R.darajahBuruj;
+    R.qaidah90 = 90;
+
+    const golDirect = [0, 1, 2, 6, 7, 8];
+    R.budDarajah = golDirect.includes(R.burujAkhir) ? R.majmuah : R.qaidah90 - R.majmuah;
+
+    R.logSinBud = calcLogSin(R.budDarajah);
+    R.logSinMaylAzham = 9.59983;
+
+    let totalLogSin1 = R.logSinBud + R.logSinMaylAzham;
+    if (totalLogSin1 >= 10) totalLogSin1 -= 10;
+    R.logSinMaylAwwal = totalLogSin1;
+
+    const maylAwwalDms = invLogSin(R.logSinMaylAwwal);
+    R.maylAwwalDeg = maylAwwalDms.deg; R.maylAwwalMin = maylAwwalDms.min;
+
+    R.latDeg = latDeg; R.latMin = latMin; R.latArah = latArah;
+    R.isArahSama = (R.arahAkhir === R.latArah);
+
+    if (R.isArahSama) {
+      let m1 = R.maylAwwalDeg * 60 + R.maylAwwalMin;
+      let m2 = R.latDeg * 60 + R.latMin;
+      let diff = Math.abs(m1 - m2);
+      R.tamamGhayahDeg = Math.floor(diff / 60); R.tamamGhayahMin = diff % 60;
+    } else {
+      let res = addDms(R.maylAwwalDeg, R.maylAwwalMin, R.latDeg, R.latMin);
+      R.tamamGhayahDeg = res.deg; R.tamamGhayahMin = res.min;
+    }
+
+    let ghayahRes = subDms(90, 0, R.tamamGhayahDeg, R.tamamGhayahMin);
+    R.ghayahIrtifaDeg = ghayahRes.deg; R.ghayahIrtifaMin = ghayahRes.min;
+
+    R.logSinArdhBalad = calcLogSin(R.latDeg + R.latMin / 60);
+    let sumLogQutr = R.logSinMaylAwwal + R.logSinArdhBalad;
+    if (sumLogQutr >= 10) sumLogQutr -= 10;
+    R.logSinBudQutr = sumLogQutr;
+    const budQutrDms = invLogSin(R.logSinBudQutr);
+    R.budQutrDeg = budQutrDms.deg; R.budQutrMin = budQutrDms.min;
+
+    R.logCosMaylAwwal = calcLogCos(R.maylAwwalDeg + R.maylAwwalMin / 60);
+    R.logCosArdhBalad = calcLogCos(R.latDeg + R.latMin / 60);
+    let sumLogAsl = R.logCosMaylAwwal + R.logCosArdhBalad;
+    if (sumLogAsl >= 10) sumLogAsl -= 10;
+    R.logSinAslMutlaq = sumLogAsl;
+
+    R.logSinNishfFadhlah = (R.logSinBudQutr + 10) - R.logSinAslMutlaq;
+    const nishfFadhlahDms = invLogSin(R.logSinNishfFadhlah);
+    R.nishfFadhlahDeg = nishfFadhlahDms.deg; R.nishfFadhlahMin = nishfFadhlahDms.min;
+
+    R.sinQaus1 = 0.00975; R.sinBudQutr = calcSin(R.budQutrDeg + R.budQutrMin / 60);
+    R.sinMujtama1 = R.sinQaus1 + R.sinBudQutr;
+    const mujtama1Dms = invSin(R.sinMujtama1);
+    R.logSinMujtama1 = calcLogSin(mujtama1Dms.deg + mujtama1Dms.min / 60);
+    R.logSinBaqi1 = (R.logSinMujtama1 + 10) - R.logSinAslMutlaq;
+    const baqi1Dms = invLogSin(R.logSinBaqi1);
+    let ikhtilafRes = subDms(baqi1Dms.deg, baqi1Dms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
+
+    R.sinQaus2 = 0.00436; R.sinMujtama2 = R.sinQaus2 + R.sinBudQutr;
+    const mujtama2Dms = invSin(R.sinMujtama2);
+    R.logSinMujtama2 = calcLogSin(mujtama2Dms.deg + mujtama2Dms.min / 60);
+    R.logSinBaqi2 = (R.logSinMujtama2 + 10) - R.logSinAslMutlaq;
+    const baqi2Dms = invLogSin(R.logSinBaqi2);
+    let qutrSyamsRes = subDms(baqi2Dms.deg, baqi2Dms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
+    let tamkiniyahRes = addDms(qutrSyamsRes.deg, qutrSyamsRes.min, ikhtilafRes.deg, ikhtilafRes.min);
+
+    R.qausHaqiqiRes = R.isArahSama ? addDms(90, 0, R.nishfFadhlahDeg, R.nishfFadhlahMin) : subDms(90, 0, R.nishfFadhlahDeg, R.nishfFadhlahMin);
+    R.qausMaraiRes = addDms(R.qausHaqiqiRes.deg, R.qausHaqiqiRes.min, tamkiniyahRes.deg, tamkiniyahRes.min);
+    const maghribBox = convertLattice4(R.qausMaraiRes.deg, R.qausMaraiRes.min);
+
+    R.logSinIsyaPaten = 9.46594;
+    R.logSinBaqiIsya = (R.logSinIsyaPaten + 10) - R.logSinAslMutlaq;
+    const baqiIsyaDms = invLogSin(R.logSinBaqiIsya);
+    R.sinBaqiIsya = calcSin(baqiIsyaDms.deg + baqiIsyaDms.min / 60);
+    R.sinNishfFadhlah = calcSin(R.nishfFadhlahDeg + R.nishfFadhlahMin / 60);
+    R.sinHasilIsya = R.isArahSama ? (R.sinBaqiIsya + R.sinNishfFadhlah) : (R.sinBaqiIsya - R.sinNishfFadhlah);
+    const hasilIsyaDms = invSin(R.sinHasilIsya);
+    let resIsya = R.isArahSama ? subDms(hasilIsyaDms.deg, hasilIsyaDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin) : addDms(hasilIsyaDms.deg, hasilIsyaDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
+    let awalIsyaRes = addDms(resIsya.deg, resIsya.min, R.qausMaraiRes.deg, R.qausMaraiRes.min);
+    const isyaBox = convertLattice4(awalIsyaRes.deg, awalIsyaRes.min);
+
+    R.logSinSubhPaten = 9.51264;
+    R.logSinBaqiSubh = (R.logSinSubhPaten + 10) - R.logSinAslMutlaq;
+    const baqiSubhDms = invLogSin(R.logSinBaqiSubh);
+    R.sinBaqiSubh = calcSin(baqiSubhDms.deg + baqiSubhDms.min / 60);
+    R.sinHasilSubh = R.isArahSama ? (R.sinBaqiSubh + R.sinNishfFadhlah) : (R.sinBaqiSubh - R.sinNishfFadhlah);
+    const hasilSubhDms = invSin(R.sinHasilSubh);
+    let resSubh = R.isArahSama ? subDms(hasilSubhDms.deg, hasilSubhDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin) : addDms(hasilSubhDms.deg, hasilSubhDms.min, R.nishfFadhlahDeg, R.nishfFadhlahMin);
+    let qausThuluRes = subDms(180, 0, R.qausMaraiRes.deg, R.qausMaraiRes.min);
+    let totalMinLail = qausThuluRes.deg * 60 + qausThuluRes.min;
+    let totalMinFajr = resSubh.deg * 60 + resSubh.min;
+    let diffSubhMin = Math.abs(totalMinLail - totalMinFajr);
+    const subhBox = convertLattice4(Math.floor(diffSubhMin / 60), diffSubhMin % 60);
+
+    R.cotGhayahIrtifa = calcCot(R.ghayahIrtifaDeg + R.ghayahIrtifaMin / 60);
+    R.cotIrtifaAsr = R.cotGhayahIrtifa + 1.00000;
+    const irtifaAsrDms = invCot(R.cotIrtifaAsr);
+    R.sinIrtifaAsr = calcSin(irtifaAsrDms.deg + irtifaAsrDms.min / 60);
+    R.sinBudQutrAsr = calcSin(R.budQutrDeg + R.budQutrMin / 60);
+    R.sinMuaddalAsr = R.isArahSama ? (R.sinIrtifaAsr - R.sinBudQutrAsr) : (R.sinIrtifaAsr + R.sinBudQutrAsr);
+    const muaddalAsrDms = invSin(R.sinMuaddalAsr);
+    R.logSinMuaddalAsr = calcLogSin(muaddalAsrDms.deg + muaddalAsrDms.min / 60);
+    R.logSinTamamFadhlAsr = (R.logSinMuaddalAsr + 10) - R.logSinAslMutlaq;
+    const tamamFadhlAsrDms = invLogSin(R.logSinTamamFadhlAsr);
+
+    let rawAsrDeg = tamamFadhlAsrDms.deg + tamamFadhlAsrDms.min / 60;
+    let finalAsrDegFloat = (rawAsrDeg < 45) ? (90 - rawAsrDeg) : rawAsrDeg;
+    let fAsrDeg = Math.floor(finalAsrDegFloat);
+    let fAsrMin = Math.round((finalAsrDegFloat - fAsrDeg) * 60);
+    if (fAsrMin === 60) { fAsrDeg += 1; fAsrMin = 0; }
+    const asrBox = convertLattice4(fAsrDeg, fAsrMin);
+
+    const syuruqBox = convertLattice4(Math.floor(totalMinLail / 60), totalMinLail % 60);
+
+    return {
+      subuh:   addIhtiyathMinutes(subhBox.jam, subhBox.menit, 3),
+      syuruq:  addIhtiyathMinutes(syuruqBox.jam, syuruqBox.menit, 0),
+      dzuhur:  "12:04",
+      ashar:   addIhtiyathMinutes((asrBox.jam + 12) % 24, asrBox.menit, 3),
+      maghrib: addIhtiyathMinutes((maghribBox.jam + 12) % 24, maghribBox.menit, 3),
+      isya:    addIhtiyathMinutes((isyaBox.jam + 12) % 24, isyaBox.menit, 3)
+    };
+  }
+
+  // OPTIMISASI PERFORMA: CACHING KALKULASI FALAK (EKSEKUSI 1X PER HARI)
+  let cachedPrayerTimes = null;
+  let cachedPrayerDateKey = "";
+
+  function getCachedPrayerTimes(dateObj) {
+    const dateKey = `${dateObj.getFullYear()}-${dateObj.getMonth() + 1}-${dateObj.getDate()}`;
+    if (cachedPrayerTimes && cachedPrayerDateKey === dateKey) {
+      return cachedPrayerTimes;
+    }
+    cachedPrayerTimes = hitungWaktuSholatFalak(dateObj);
+    cachedPrayerDateKey = dateKey;
+    return cachedPrayerTimes;
+  }
+
+  // DASHBOARD REALTIME ENGINE
+  const API_URL = "https://script.google.com/macros/s/AKfycbydTT9GCsR3pddbEeHfeDOdKq_w6SkG8AsmgsK1EHT9L2HnUSJ2nraaTbTHsoK68kl2/exec";
+  const LONGITUDE = 112.836500;
+  const LATITUDE = -7.65;
+
+  let rawData = JSON.parse(localStorage.getItem('jadwal_signage_cache') || 'null');
+  let currentJadwalIndex = 0;
+  let activeJadwalList = [];
+  let isIdleTomorrowMode = false;
+  let coverflowTimer = null;
+  let lastRenderedKey = "";
+  let lastSummaryKey = "";
+  let lastReloadHour = "";
+  let preAdzanActive = false;
+  let adzanActive = false;
+  let lastAdzanTriggeredTime = "";
+
+  let isBreakModeActive = false;
+  let isWipingExit = false;
+  let globalNextKbmStartMinutes = -1;
+
+  function cleanDayStr(val) {
+    return String(val || '').trim().toUpperCase().replace(/[^A-Z]/g, '');
+  }
+
+  async function fetchRealWeather() {
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LATITUDE}&longitude=${LONGITUDE}&current_weather=true&hourly=relative_humidity_2m`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.current_weather) {
+        const temp = Math.round(data.current_weather.temperature);
+        document.getElementById('weather-text').innerText = `${temp}°C`;
+        
+        const breakTemp = document.getElementById('break-weather-temp');
+        if (breakTemp) breakTemp.innerText = `${temp}°C`;
+
+        const breakWind = document.getElementById('break-wind');
+        if (breakWind) breakWind.innerText = `${data.current_weather.windspeed || 12} km/jam`;
+
+        const breakHumidity = document.getElementById('break-humidity');
+        if (breakHumidity && data.hourly && data.hourly.relative_humidity_2m) {
+          const currentHour = new Date().getHours();
+          const humidity = data.hourly.relative_humidity_2m[currentHour] || 75;
+          breakHumidity.innerText = `${humidity}%`;
+        }
+      }
+    } catch (e) {
+      console.warn("Weather fetch error:", e);
+    }
+  }
+  setInterval(fetchRealWeather, 600000);
+  fetchRealWeather();
+
+  function updateAutoTheme(nowHour) {
+    if (nowHour >= 18 || nowHour < 5) {
+      if (!document.body.classList.contains('dark-mode')) {
+        document.body.classList.add('dark-mode');
+      }
+    } else {
+      if (document.body.classList.contains('dark-mode')) {
+        document.body.classList.remove('dark-mode');
+      }
+    }
+  }
+
+  function showPreAdzanScreen(namaSholat, diffSec) {
+    preAdzanActive = true;
+    const modal = document.getElementById('modal-pre-adzan');
+    const namaEl = document.getElementById('nama-sholat-pre-adzan');
+    const countEl = document.getElementById('countdown-pre-adzan');
+
+    if (namaEl) namaEl.innerText = namaSholat;
+    const m = String(Math.floor(diffSec / 60)).padStart(2, '0');
+    const s = String(diffSec % 60).padStart(2, '0');
+    if (countEl) countEl.innerText = `Adzan berkumandang dalam: ${m}:${s}`;
+
+    if (modal && modal.classList.contains('hidden')) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+  }
+
+  function hidePreAdzanScreen() {
+    preAdzanActive = false;
+    const modal = document.getElementById('modal-pre-adzan');
+    if (modal) {
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
+    }
+  }
+
+  function updateHeaderPrayerRibbon() {
+    const now = new Date();
+    const istiwaNow = getIstiwaTime(now);
+    const p = getCachedPrayerTimes(now);
+    if (!p) return;
+
+    updateAutoTheme(istiwaNow.getHours());
+
+    document.getElementById('time-subuh').innerText = p.subuh;
+    document.getElementById('time-dzuhur').innerText = p.dzuhur;
+    document.getElementById('time-ashar').innerText = p.ashar;
+    document.getElementById('time-maghrib').innerText = p.maghrib;
+    document.getElementById('time-isya').innerText = p.isya;
+
+    const breakSubuh = document.getElementById('break-sholat-subuh');
+    if (breakSubuh) breakSubuh.innerText = p.subuh;
+    const breakSyuruq = document.getElementById('break-sholat-syuruq');
+    if (breakSyuruq) breakSyuruq.innerText = p.syuruq || '05:30';
+    const breakDzuhur = document.getElementById('break-sholat-dzuhur');
+    if (breakDzuhur) breakDzuhur.innerText = p.dzuhur;
+    const breakAshar = document.getElementById('break-sholat-ashar');
+    if (breakAshar) breakAshar.innerText = p.ashar;
+    const breakMaghrib = document.getElementById('break-sholat-maghrib');
+    if (breakMaghrib) breakMaghrib.innerText = p.maghrib;
+    const breakIsya = document.getElementById('break-sholat-isya');
+    if (breakIsya) breakIsya.innerText = p.isya;
+
+    const diffMs = istiwaNow.getTime() - now.getTime();
+    const diffTotalSec = Math.abs(Math.floor(diffMs / 1000));
+    const diffMin = Math.floor(diffTotalSec / 60);
+    const diffSec = diffTotalSec % 60;
+    const signStr = diffMs >= 0 ? '+' : '-';
+    const breakDiffEl = document.getElementById('break-time-diff');
+    if (breakDiffEl) {
+      breakDiffEl.innerText = `${signStr}${diffMin} Menit ${diffSec} Detik`;
+    }
+
+    const formatHM = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const nowIstiwaHM = formatHM(istiwaNow);
+
+    const listSholat = [
+      { id: 'box-subuh', name: 'SUBUH', time: p.subuh },
+      { id: 'box-dzuhur', name: 'DZUHUR', time: p.dzuhur },
+      { id: 'box-ashar', name: 'ASHAR', time: p.ashar },
+      { id: 'box-maghrib', name: 'MAGHRIB', time: p.maghrib },
+      { id: 'box-isya', name: 'ISYA', time: p.isya }
+    ];
+
+    const currentIstiwaSec = istiwaNow.getHours() * 3600 + istiwaNow.getMinutes() * 60 + istiwaNow.getSeconds();
+    let nextSholatObj = null;
+    let diffSecPrayer = 0;
+
+    for (let s of listSholat) {
+      const parts = s.time.split(':');
+      const pSec = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60;
+      if (pSec > currentIstiwaSec) {
+        nextSholatObj = s;
+        diffSecPrayer = pSec - currentIstiwaSec;
+        break;
+      }
+    }
+
+    if (!nextSholatObj) {
+      nextSholatObj = listSholat[0];
+      const parts = nextSholatObj.time.split(':');
+      const pSec = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60;
+      diffSecPrayer = (24 * 3600 - currentIstiwaSec) + pSec;
+    }
+
+    const cdH = String(Math.floor(diffSecPrayer / 3600)).padStart(2, '0');
+    const cdM = String(Math.floor((diffSecPrayer % 3600) / 60)).padStart(2, '0');
+    const cdS = String(diffSecPrayer % 60).padStart(2, '0');
+
+    const nameEl = document.getElementById('next-prayer-name');
+    const countEl = document.getElementById('next-prayer-countdown');
+    if (nameEl) nameEl.innerText = `⏳ MENJELANG ${nextSholatObj.name}`;
+    if (countEl) countEl.innerText = `-${cdH}:${cdM}:${cdS}`;
+
+    listSholat.forEach(s => {
+      const box = document.getElementById(s.id);
+      if (box) {
+        if (s.id === nextSholatObj.id) {
+          box.className = "px-3 py-1.5 rounded-xl text-center border bg-emerald-800 text-white shadow-md shadow-emerald-900/30 font-bold scale-105 transition-all";
+          box.querySelector('span').className = "text-[9px] font-extrabold text-emerald-100 uppercase block tracking-wider";
+          box.querySelector('span:nth-child(2)').className = "text-sm font-black text-white";
+        } else {
+          box.className = "px-3 py-1.5 rounded-xl text-center border border-transparent transition";
+          box.querySelector('span').className = "text-[9px] font-extrabold text-emerald-900 uppercase block tracking-wider";
+          box.querySelector('span:nth-child(2)').className = "text-sm font-black text-slate-800";
+        }
+      }
+    });
+
+    if (diffSecPrayer <= 60 && diffSecPrayer > 0 && !adzanActive) {
+      showPreAdzanScreen(nextSholatObj.name, diffSecPrayer);
+    } else if (preAdzanActive && (diffSecPrayer > 60 || diffSecPrayer <= 0)) {
+      hidePreAdzanScreen();
+    }
+
+    if (!adzanActive && lastAdzanTriggeredTime !== nowIstiwaHM) {
+      const matchingSholat = listSholat.find(s => s.time === nowIstiwaHM);
+      if (matchingSholat) {
+        lastAdzanTriggeredTime = nowIstiwaHM;
+        hidePreAdzanScreen();
+        triggerAdzanScreen(matchingSholat.name);
+      }
+    }
+  }
+
+  function triggerAdzanScreen(namaSholat) {
+    adzanActive = true;
+    const modal = document.getElementById('modal-adzan');
+    document.getElementById('nama-sholat-adzan').innerText = namaSholat;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    const audio = document.getElementById('audio-adzan');
+    const countdownEl = document.getElementById('countdown-adzan');
+    let cdInterval = null;
+
+    function closeAdzanModal() {
+      if (cdInterval) clearInterval(cdInterval);
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
       if (audio) {
+        audio.pause();
         audio.currentTime = 0;
-        audio.onended = () => closeAdzanModal();
-
-        audio.play().then(() => {
-          let remaining = Math.ceil(audio.duration);
-          if (isNaN(remaining) || remaining <= 0) remaining = 180;
-
-          const updateAdzanCountdown = () => {
-            const m = String(Math.floor(remaining / 60)).padStart(2, '0');
-            const s = String(remaining % 60).padStart(2, '0');
-            countdownEl.innerText = `Kembali ke jadwal dalam: ${m}:${s}`;
-            remaining--;
-            if (remaining < 0) clearInterval(cdInterval);
-          };
-
-          updateAdzanCountdown();
-          cdInterval = setInterval(updateAdzanCountdown, 1000);
-        }).catch(e => {
-          let remaining = 180;
-          cdInterval = setInterval(() => {
-            remaining--;
-            const m = String(Math.floor(remaining / 60)).padStart(2, '0');
-            const s = String(remaining % 60).padStart(2, '0');
-            countdownEl.innerText = `Kembali ke jadwal dalam: ${m}:${s}`;
-            if (remaining <= 0) closeAdzanModal();
-          }, 1000);
-        });
-      } else {
-        closeAdzanModal();
+        audio.onended = null;
       }
+      adzanActive = false;
     }
 
-    function cleanTimeStr(val) {
-      if (!val) return "00:00";
-      const str = val.toString().trim();
-      const match = str.match(/(\d{1,2}):(\d{2})/);
-      return match ? `${String(match[1]).padStart(2, '0')}:${String(match[2]).padStart(2, '0')}` : str;
-    }
+    if (audio) {
+      audio.currentTime = 0;
+      audio.onended = () => closeAdzanModal();
 
-    function parseJadwalRow(item) {
-      if (item._c0 !== undefined && item._c1 !== undefined) {
-        return {
-          hari: cleanDayStr(item._c0),
-          jam_mulai: cleanTimeStr(item._c1),
-          jam_selesai: cleanTimeStr(item._c2),
-          kelas: String(item._c3).trim(),
-          ruang: String(item._c4).trim(),
-          id_guru: String(item._c5).trim(),
-          mapel: String(item._c6).trim()
+      audio.play().then(() => {
+        let remaining = Math.ceil(audio.duration);
+        if (isNaN(remaining) || remaining <= 0) remaining = 180;
+
+        const updateAdzanCountdown = () => {
+          const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+          const s = String(remaining % 60).padStart(2, '0');
+          countdownEl.innerText = `Kembali ke jadwal dalam: ${m}:${s}`;
+          remaining--;
+          if (remaining < 0) clearInterval(cdInterval);
         };
-      }
-      const vals = Object.values(item);
+
+        updateAdzanCountdown();
+        cdInterval = setInterval(updateAdzanCountdown, 1000);
+      }).catch(e => {
+        let remaining = 180;
+        cdInterval = setInterval(() => {
+          remaining--;
+          const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+          const s = String(remaining % 60).padStart(2, '0');
+          countdownEl.innerText = `Kembali ke jadwal dalam: ${m}:${s}`;
+          if (remaining <= 0) closeAdzanModal();
+        }, 1000);
+      });
+    } else {
+      closeAdzanModal();
+    }
+  }
+
+  function cleanTimeStr(val) {
+    if (!val) return "00:00";
+    const str = val.toString().trim();
+    const match = str.match(/(\d{1,2}):(\d{2})/);
+    return match ? `${String(match[1]).padStart(2, '0')}:${String(match[2]).padStart(2, '0')}` : str;
+  }
+
+  function parseJadwalRow(item) {
+    if (item._c0 !== undefined && item._c1 !== undefined) {
       return {
-        hari: cleanDayStr(vals[0]),
-        jam_mulai: cleanTimeStr(vals[1]),
-        jam_selesai: cleanTimeStr(vals[2]),
-        kelas: String(vals[3] || '').trim(),
-        ruang: String(vals[4] || '').trim(),
-        id_guru: String(vals[5] || '').trim(),
-        mapel: String(vals[6] || '').trim()
+        hari: cleanDayStr(item._c0),
+        jam_mulai: cleanTimeStr(item._c1),
+        jam_selesai: cleanTimeStr(item._c2),
+        kelas: String(item._c3).trim(),
+        ruang: String(item._c4).trim(),
+        id_guru: String(item._c5).trim(),
+        mapel: String(item._c6).trim()
       };
     }
+    const vals = Object.values(item);
+    return {
+      hari: cleanDayStr(vals[0]),
+      jam_mulai: cleanTimeStr(vals[1]),
+      jam_selesai: cleanTimeStr(vals[2]),
+      kelas: String(vals[3] || '').trim(),
+      ruang: String(vals[4] || '').trim(),
+      id_guru: String(vals[5] || '').trim(),
+      mapel: String(vals[6] || '').trim()
+    };
+  }
 
-    function parseGuruRow(item) {
-      if (item._c0 !== undefined && item._c1 !== undefined) {
-        return {
-          id_guru: String(item._c0).trim(),
-          nama_guru: String(item._c1).trim(),
-          domisili: String(item._c2).trim(),
-          alamat: String(item._c3).trim(),
-          status_guru: String(item._c4 || '').trim(),
-          foto: String(item._c5 || '').trim()
-        };
-      }
-      const vals = Object.values(item);
+  function parseGuruRow(item) {
+    if (item._c0 !== undefined && item._c1 !== undefined) {
       return {
-        id_guru: String(vals[0] || '').trim(),
-        nama_guru: String(vals[1] || '').trim(),
-        domisili: String(vals[2] || '').trim(),
-        alamat: String(vals[3] || '').trim(),
-        status_guru: String(vals[4] || '').trim(),
-        foto: String(vals[5] || '').trim()
+        id_guru: String(item._c0).trim(),
+        nama_guru: String(item._c1).trim(),
+        domisili: String(item._c2).trim(),
+        alamat: String(item._c3).trim(),
+        status_guru: String(item._c4 || '').trim(),
+        foto: String(item._c5 || '').trim()
       };
     }
+    const vals = Object.values(item);
+    return {
+      id_guru: String(vals[0] || '').trim(),
+      nama_guru: String(vals[1] || '').trim(),
+      domisili: String(vals[2] || '').trim(),
+      alamat: String(vals[3] || '').trim(),
+      status_guru: String(vals[4] || '').trim(),
+      foto: String(vals[5] || '').trim()
+    };
+  }
 
-    function parsePiketRow(item) {
-      if (item._c0 !== undefined && item._c1 !== undefined) {
-        return {
-          hari: cleanDayStr(item._c0),
-          jam_mulai: cleanTimeStr(item._c1),
-          jam_selesai: cleanTimeStr(item._c2),
-          id_guru: String(item._c3).trim(),
-          area_piket: String(item._c4 || '').trim()
-        };
-      }
-      const vals = Object.values(item);
+  function parsePiketRow(item) {
+    if (item._c0 !== undefined && item._c1 !== undefined) {
       return {
-        hari: cleanDayStr(vals[0]),
-        jam_mulai: cleanTimeStr(vals[1]),
-        jam_selesai: cleanTimeStr(vals[2]),
-        id_guru: String(vals[3] || '').trim(),
-        area_piket: String(vals[4] || '').trim()
+        hari: cleanDayStr(item._c0),
+        jam_mulai: cleanTimeStr(item._c1),
+        jam_selesai: cleanTimeStr(item._c2),
+        id_guru: String(item._c3).trim(),
+        area_piket: String(item._c4 || '').trim()
       };
     }
+    const vals = Object.values(item);
+    return {
+      hari: cleanDayStr(vals[0]),
+      jam_mulai: cleanTimeStr(vals[1]),
+      jam_selesai: cleanTimeStr(vals[2]),
+      id_guru: String(vals[3] || '').trim(),
+      area_piket: String(vals[4] || '').trim()
+    };
+  }
 
-    function timeToMinutes(val) {
-      if (!val) return -1;
-      const str = val.toString().trim();
-      const match = str.match(/(\d{1,2}):(\d{2})/);
-      if (match) return (parseInt(match[1], 10) * 60) + parseInt(match[2], 10);
-      const num = parseFloat(str);
-      if (!isNaN(num) && num >= 0 && num < 1) return Math.round(num * 24 * 60);
-      return -1;
+  function timeToMinutes(val) {
+    if (!val) return -1;
+    const str = val.toString().trim();
+    const match = str.match(/(\d{1,2}):(\d{2})/);
+    if (match) return (parseInt(match[1], 10) * 60) + parseInt(match[2], 10);
+    const num = parseFloat(str);
+    if (!isNaN(num) && num >= 0 && num < 1) return Math.round(num * 24 * 60);
+    return -1;
+  }
+
+  function getDirectDriveImg(url) {
+    if (!url) return 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+    const match = url.toString().match(/\/d\/([a-zA-Z0-9_-]+)/) || url.toString().match(/id=([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
+    return url;
+  }
+
+  function getStatusGuruBadge(statusGuru, isTableSummary = false) {
+    const st = (statusGuru || '').toString().trim().toUpperCase();
+    if (isTableSummary) {
+      if (st.includes('WALI')) return `<span class="bg-amber-100 text-amber-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-amber-300">★ WALI KELAS</span>`;
+      if (st.includes('FAN')) return `<span class="bg-teal-100 text-teal-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-teal-300">● FAN</span>`;
+      return `<span class="bg-emerald-100 text-emerald-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-emerald-300">${st || 'GURU'}</span>`;
+    } else {
+      if (st.includes('WALI')) return `<span class="bg-amber-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-amber-300">★ WALI KELAS</span>`;
+      if (st.includes('FAN')) return `<span class="bg-teal-700 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-teal-400">● FAN</span>`;
+      return `<span class="bg-emerald-800 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-emerald-500">${st || 'GURU'}</span>`;
     }
+  }
 
-    function getDirectDriveImg(url) {
-      if (!url) return 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
-      const match = url.toString().match(/\/d\/([a-zA-Z0-9_-]+)/) || url.toString().match(/id=([a-zA-Z0-9_-]+)/);
-      if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
-      return url;
-    }
+  function getIstiwaTime(now) {
+    const startOfYear = new Date(now.getFullYear(), 0, 0);
+    const diff = now - startOfYear;
+    const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const gamma = (2 * Math.PI / 365) * (dayOfYear - 1 + (now.getHours() - 12) / 24);
+    const eotMinutes = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma) - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
+    const lonCorrectionMinutes = (LONGITUDE - 105) * 4;
+    return new Date(now.getTime() + (lonCorrectionMinutes + eotMinutes) * 60 * 1000);
+  }
 
-    function getStatusGuruBadge(statusGuru, isTableSummary = false) {
-      const st = (statusGuru || '').toString().trim().toUpperCase();
-      if (isTableSummary) {
-        if (st.includes('WALI')) return `<span class="bg-amber-100 text-amber-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-amber-300">★ WALI KELAS</span>`;
-        if (st.includes('FAN')) return `<span class="bg-teal-100 text-teal-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-teal-300">● FAN</span>`;
-        return `<span class="bg-emerald-100 text-emerald-900 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-emerald-300">${st || 'GURU'}</span>`;
-      } else {
-        if (st.includes('WALI')) return `<span class="bg-amber-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-amber-300">★ WALI KELAS</span>`;
-        if (st.includes('FAN')) return `<span class="bg-teal-700 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-teal-400">● FAN</span>`;
-        return `<span class="bg-emerald-800 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shadow-md border border-emerald-500">${st || 'GURU'}</span>`;
-      }
-    }
+  function getHijriDate(date) {
+    const islamicMonths = ["Muharram", "Safar", "Rabi'ul Awwal", "Rabi'ul Akhir", "Jumadil Ula", "Jumadil Akhirah", "Rajab", "Sya'ban", "Ramadhan", "Syawwal", "Dzulqa'dah", "Dzulhijjah"];
+    const d = date.getDate(), m = date.getMonth() + 1, y = date.getFullYear();
+    let julianDay = Math.floor((1461 * (y + 4800 + Math.floor((m - 14) / 12))) / 4) + Math.floor((367 * (m - 2 - 12 * (Math.floor((m - 14) / 12)))) / 12) - Math.floor((3 * (Math.floor((y + 4900 + Math.floor((m - 14) / 12)) / 100))) / 4) + d - 32075;
+    let l = julianDay - 1948440 + 10632;
+    let n = Math.floor((l - 1) / 10631);
+    l = l - 10631 * n + 354;
+    let j = (Math.floor((10985 - l) / 5316)) * (Math.floor((50 * l) / 17719)) + (Math.floor(l / 5670)) * (Math.floor((43 * l) / 15238));
+    l = l - (Math.floor((30 - j) / 15)) * (Math.floor((17719 * j) / 50)) - (Math.floor(j / 16)) * (Math.floor((15238 * j) / 43)) + 29;
+    let month = Math.floor((24 * l) / 709);
+    let day = l - Math.floor((709 * month) / 24);
+    let year = 30 * n + j - 30;
+    return `${day} ${islamicMonths[month - 1]} ${year} H`;
+  }
 
-    function getIstiwaTime(now) {
-      const startOfYear = new Date(now.getFullYear(), 0, 0);
-      const diff = now - startOfYear;
-      const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const gamma = (2 * Math.PI / 365) * (dayOfYear - 1 + (now.getHours() - 12) / 24);
-      const eotMinutes = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma) - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
-      const lonCorrectionMinutes = (LONGITUDE - 105) * 4;
-      return new Date(now.getTime() + (lonCorrectionMinutes + eotMinutes) * 60 * 1000);
-    }
+  function updateClockAndDates() {
+    const now = new Date();
+    const istiwaNow = getIstiwaTime(now);
 
-    function getHijriDate(date) {
-      const islamicMonths = ["Muharram", "Safar", "Rabi'ul Awwal", "Rabi'ul Akhir", "Jumadil Ula", "Jumadil Akhirah", "Rajab", "Sya'ban", "Ramadhan", "Syawwal", "Dzulqa'dah", "Dzulhijjah"];
-      const d = date.getDate(), m = date.getMonth() + 1, y = date.getFullYear();
-      let julianDay = Math.floor((1461 * (y + 4800 + Math.floor((m - 14) / 12))) / 4) + Math.floor((367 * (m - 2 - 12 * (Math.floor((m - 14) / 12)))) / 12) - Math.floor((3 * (Math.floor((y + 4900 + Math.floor((m - 14) / 12)) / 100))) / 4) + d - 32075;
-      let l = julianDay - 1948440 + 10632;
-      let n = Math.floor((l - 1) / 10631);
-      l = l - 10631 * n + 354;
-      let j = (Math.floor((10985 - l) / 5316)) * (Math.floor((50 * l) / 17719)) + (Math.floor(l / 5670)) * (Math.floor((43 * l) / 15238));
-      l = l - (Math.floor((30 - j) / 15)) * (Math.floor((17719 * j) / 50)) - (Math.floor(j / 16)) * (Math.floor((15238 * j) / 43)) + 29;
-      let month = Math.floor((24 * l) / 709);
-      let day = l - Math.floor((709 * month) / 24);
-      let year = 30 * n + j - 30;
-      return `${day} ${islamicMonths[month - 1]} ${year} H`;
-    }
+    const jamIstiwa = String(istiwaNow.getHours()).padStart(2, '0');
+    const menitIstiwa = String(istiwaNow.getMinutes()).padStart(2, '0');
+    const detikIstiwa = String(istiwaNow.getSeconds()).padStart(2, '0');
+    const timeIstiwaStr = `${jamIstiwa}:${menitIstiwa}:${detikIstiwa}`;
 
-    function updateClockAndDates() {
-      const now = new Date();
-      const istiwaNow = getIstiwaTime(now);
+    const jamWIB = String(now.getHours()).padStart(2, '0');
+    const menitWIB = String(now.getMinutes()).padStart(2, '0');
+    const detikWIB = String(now.getSeconds()).padStart(2, '0');
+    const timeWIBStr = `${jamWIB}:${menitWIB}:${detikWIB}`;
 
-      const jamIstiwa = String(istiwaNow.getHours()).padStart(2, '0');
-      const menitIstiwa = String(istiwaNow.getMinutes()).padStart(2, '0');
-      const detikIstiwa = String(istiwaNow.getSeconds()).padStart(2, '0');
-      const timeIstiwaStr = `${jamIstiwa}:${menitIstiwa}:${detikIstiwa}`;
+    document.getElementById('live-clock').innerText = timeIstiwaStr;
 
-      const jamWIB = String(now.getHours()).padStart(2, '0');
-      const menitWIB = String(now.getMinutes()).padStart(2, '0');
-      const detikWIB = String(now.getSeconds()).padStart(2, '0');
-      const timeWIBStr = `${jamWIB}:${menitWIB}:${detikWIB}`;
+    const breakIstiwaEl = document.getElementById('break-clock-istiwa');
+    if (breakIstiwaEl) breakIstiwaEl.innerText = timeIstiwaStr;
 
-      document.getElementById('live-clock').innerText = timeIstiwaStr;
+    const breakWIBEl = document.getElementById('break-clock-wib');
+    if (breakWIBEl) breakWIBEl.innerText = timeWIBStr;
 
-      const breakIstiwaEl = document.getElementById('break-clock-istiwa');
-      if (breakIstiwaEl) breakIstiwaEl.innerText = timeIstiwaStr;
+    const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const dateStr = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()} M | ${getHijriDate(now)}`;
+    
+    document.getElementById('info-tanggal').innerText = dateStr;
+    const breakHijri = document.getElementById('break-hijri-date');
+    if (breakHijri) breakHijri.innerText = dateStr;
 
-      const breakWIBEl = document.getElementById('break-clock-wib');
-      if (breakWIBEl) breakWIBEl.innerText = timeWIBStr;
+    updateHeaderPrayerRibbon();
 
-      const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-      const bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-      const dateStr = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()} M | ${getHijriDate(now)}`;
-      
-      document.getElementById('info-tanggal').innerText = dateStr;
-      const breakHijri = document.getElementById('break-hijri-date');
-      if (breakHijri) breakHijri.innerText = dateStr;
-
-      updateHeaderPrayerRibbon();
-
-      const targetHours = ["00", "06", "12", "18"];
-      if (targetHours.includes(jamIstiwa) && menitIstiwa === "00" && detikIstiwa === "05") {
-        if (lastReloadHour !== jamIstiwa) {
-          lastReloadHour = jamIstiwa;
-          console.log("Jadwal pembersihan memori internal (Reload dimatikan demi menjaga Keep-Alive)");
-        }
-      }
-    }
-
-    setInterval(updateClockAndDates, 1000);
-    updateClockAndDates();
-
-    async function fetchData(retryCount = 0) {
-      const statusBadge = document.getElementById('api-status-badge');
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
-
-      try {
-        const res = await fetch(API_URL, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
-        const newData = await res.json();
-
-        if (newData && (newData.data_guru || newData.jadwal_pelajaran)) {
-          rawData = newData;
-          localStorage.setItem('jadwal_signage_cache', JSON.stringify(newData));
-          statusBadge.className = "bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-300";
-          statusBadge.innerText = `🟢 Terhubung (${(rawData.data_guru||[]).length} Guru, ${(rawData.jadwal_pelajaran||[]).length} Jadwal)`;
-          processData();
-          return;
-        } else {
-          throw new Error("Format data tidak valid");
-        }
-      } catch (err) {
-        clearTimeout(timeoutId);
-        if (retryCount < 2) {
-          setTimeout(() => fetchData(retryCount + 1), 10000);
-          return;
-        }
-        if (rawData) {
-          statusBadge.className = "bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full";
-          statusBadge.innerText = `🟡 Mode Cache Offline`;
-          processData();
-        } else {
-          statusBadge.className = "bg-rose-100 text-rose-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full";
-          statusBadge.innerText = `🔴 Mengoneksikan...`;
-        }
-      }
-    }
-
-    function processData() {
-      if (!rawData) return;
-      const now = new Date();
-      const istiwaNow = getIstiwaTime(now);
-      const hariList = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
-      const hariIniIndex = now.getDay();
-      const hariIniKapital = cleanDayStr(hariList[hariIniIndex]);
+    // UPDATE TIMING BREAK MODE SECARA REALTIME SETIAP 1 DETIK
+    if (isBreakModeActive && !isWipingExit) {
+      const timerText = document.getElementById('break-next-kbm-timer');
       const menitSekarangIstiwa = (istiwaNow.getHours() * 60) + istiwaNow.getMinutes();
+      const detikSekarang = istiwaNow.getSeconds();
 
-      const dataGuruList = (rawData.data_guru || []).map(parseGuruRow);
-      const jadwalPelajaranList = (rawData.jadwal_pelajaran || []).map(parseJadwalRow);
-      const jadwalPiketList = (rawData.jadwal_piket || []).map(parsePiketRow);
+      if (globalNextKbmStartMinutes !== -1) {
+        const diffMinutes = globalNextKbmStartMinutes - menitSekarangIstiwa - 1;
+        const diffSecs = 60 - detikSekarang;
+        const totalRemainingSec = (diffMinutes * 60) + diffSecs;
 
-      const guruMap = {};
-      dataGuruList.forEach(g => { if (g.id_guru) guruMap[g.id_guru] = g; });
+        const m = String(Math.max(0, Math.floor(totalRemainingSec / 60))).padStart(2, '0');
+        const s = String(Math.max(0, totalRemainingSec % 60)).padStart(2, '0');
+        if (timerText) timerText.innerText = `⏳ KBM Selanjutnya dimulai dalam: ${m}:${s}`;
 
-      let jadwalAktif = jadwalPelajaranList.filter(j => {
-        if (cleanDayStr(j.hari) !== hariIniKapital) return false;
-        const start = timeToMinutes(j.jam_mulai), end = timeToMinutes(j.jam_selesai);
-        if (start === -1 || end === -1) return false;
-        return menitSekarangIstiwa >= start && menitSekarangIstiwa < end;
-      }).map(j => ({
-        ...j,
-        guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '', status_guru: '' }
-      }));
-
-      let nextKbmStartMinutes = -1;
-      const upcomingJadwal = jadwalPelajaranList.filter(j => {
-        if (cleanDayStr(j.hari) !== hariIniKapital) return false;
-        const start = timeToMinutes(j.jam_mulai);
-        return start > menitSekarangIstiwa;
-      }).sort((a,b) => timeToMinutes(a.jam_mulai) - timeToMinutes(b.jam_mulai));
-
-      if (upcomingJadwal.length > 0) {
-        nextKbmStartMinutes = timeToMinutes(upcomingJadwal[0].jam_mulai);
+        // TRANSISI KELUAR 60 DETIK MENJELANG KBM
+        if (totalRemainingSec <= 60 && totalRemainingSec > 0 && !isWipingExit) {
+          isWipingExit = true;
+          const modal = document.getElementById('modal-break-mode');
+          modal.classList.add('wiping-exit');
+          setTimeout(() => {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            modal.classList.remove('wiping-exit');
+            isBreakModeActive = false;
+          }, 1500);
+        }
+      } else {
+        if (timerText) timerText.innerText = `🌙 Tidak ada KBM tersisa hari ini.`;
       }
+    }
 
-      if (jadwalAktif.length === 0) {
+    const targetHours = ["00", "06", "12", "18"];
+    if (targetHours.includes(jamIstiwa) && menitIstiwa === "00" && detikIstiwa === "05") {
+      if (lastReloadHour !== jamIstiwa) {
+        lastReloadHour = jamIstiwa;
+        console.log("Jadwal pembersihan memori internal");
+      }
+    }
+  }
+
+  setInterval(updateClockAndDates, 1000);
+  updateClockAndDates();
+
+  async function fetchData(retryCount = 0) {
+    const statusBadge = document.getElementById('api-status-badge');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+    try {
+      const res = await fetch(API_URL, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+      const newData = await res.json();
+
+      if (newData && (newData.data_guru || newData.jadwal_pelajaran)) {
+        rawData = newData;
+        localStorage.setItem('jadwal_signage_cache', JSON.stringify(newData));
+        statusBadge.className = "bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-300";
+        statusBadge.innerText = `🟢 Terhubung (${(rawData.data_guru||[]).length} Guru, ${(rawData.jadwal_pelajaran||[]).length} Jadwal)`;
+        processData();
+        return;
+      } else {
+        throw new Error("Format data tidak valid");
+      }
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (retryCount < 2) {
+        setTimeout(() => fetchData(retryCount + 1), 10000);
+        return;
+      }
+      if (rawData) {
+        statusBadge.className = "bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full";
+        statusBadge.innerText = `🟡 Mode Cache Offline`;
+        processData();
+      } else {
+        statusBadge.className = "bg-rose-100 text-rose-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full";
+        statusBadge.innerText = `🔴 Mengoneksikan...`;
+      }
+    }
+  }
+
+  function processData() {
+    if (!rawData) return;
+    const now = new Date();
+    const istiwaNow = getIstiwaTime(now);
+    const hariList = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+    const hariIniIndex = now.getDay();
+    const hariIniKapital = cleanDayStr(hariList[hariIniIndex]);
+    const menitSekarangIstiwa = (istiwaNow.getHours() * 60) + istiwaNow.getMinutes();
+    const detikSekarang = istiwaNow.getSeconds();
+
+    const dataGuruList = (rawData.data_guru || []).map(parseGuruRow);
+    const jadwalPelajaranList = (rawData.jadwal_pelajaran || []).map(parseJadwalRow);
+    const jadwalPiketList = (rawData.jadwal_piket || []).map(parsePiketRow);
+
+    const guruMap = {};
+    dataGuruList.forEach(g => { if (g.id_guru) guruMap[g.id_guru] = g; });
+
+    let jadwalAktif = jadwalPelajaranList.filter(j => {
+      if (cleanDayStr(j.hari) !== hariIniKapital) return false;
+      const start = timeToMinutes(j.jam_mulai), end = timeToMinutes(j.jam_selesai);
+      if (start === -1 || end === -1) return false;
+      return menitSekarangIstiwa >= start && menitSekarangIstiwa < end;
+    }).map(j => ({
+      ...j,
+      guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '', status_guru: '' }
+    }));
+
+    // CEK KBM SELANJUTNYA HARI INI
+    const upcomingJadwal = jadwalPelajaranList.filter(j => {
+      if (cleanDayStr(j.hari) !== hariIniKapital) return false;
+      const start = timeToMinutes(j.jam_mulai);
+      return start > menitSekarangIstiwa;
+    }).sort((a,b) => timeToMinutes(a.jam_mulai) - timeToMinutes(b.jam_mulai));
+
+    if (upcomingJadwal.length > 0) {
+      globalNextKbmStartMinutes = timeToMinutes(upcomingJadwal[0].jam_mulai);
+    } else {
+      globalNextKbmStartMinutes = -1;
+    }
+
+    // HITUNG APAKAH SUDAH DALAM WINDOW 60 DETIK MENUJUKAN KBM DENGAN DETAIL DETIK
+    const isWithinPreKbmWindow = (globalNextKbmStartMinutes !== -1) && 
+      (((globalNextKbmStartMinutes * 60) - ((menitSekarangIstiwa * 60) + detikSekarang)) <= 60);
+
+    if (jadwalAktif.length === 0) {
+      if (upcomingJadwal.length === 0) {
         isIdleTomorrowMode = true;
         const besokIndex = (hariIniIndex + 1) % 7;
         const besokKapital = cleanDayStr(hariList[besokIndex]);
@@ -1281,307 +1342,314 @@
           ...j,
           guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '', status_guru: '' }
         }));
-
-        triggerBreakModeOverlay(nextKbmStartMinutes, menitSekarangIstiwa, istiwaNow.getSeconds());
-
       } else {
         isIdleTomorrowMode = false;
-        activeJadwalList = jadwalAktif;
+        activeJadwalList = upcomingJadwal.map(j => ({
+          ...j,
+          guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '', status_guru: '' }
+        }));
+      }
+
+      // PERBAIKAN BUG 1: JANGAN TRIGGER BREAK MODE JIKA DALAM PRE-KBM WINDOW 60 DETIK
+      if (isWithinPreKbmWindow) {
         dismissBreakModeOverlay();
-
-        document.getElementById('section-title-left').innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping"></span> SOROTAN GURU MENGAJAR (LIVE COVER FLOW)`;
-        document.getElementById('section-title-right').innerHTML = `<span>📜</span> RINGKASAN KBM AKTIF JAM INI`;
-      }
-
-      const currentKey = activeJadwalList.map(item => item.id_guru + item.kelas + item.jam_mulai).join('|') + `_${isIdleTomorrowMode}`;
-
-      if (lastSummaryKey !== currentKey) {
-        renderSummaryPrompterView();
-        lastSummaryKey = currentKey;
-      }
-
-      if (lastRenderedKey !== currentKey) {
-        currentJadwalIndex = 0;
-        renderCoverflowDOM(menitSekarangIstiwa);
-        lastRenderedKey = currentKey;
       } else {
+        triggerBreakModeOverlay();
+      }
+
+    } else {
+      isIdleTomorrowMode = false;
+      activeJadwalList = jadwalAktif;
+      dismissBreakModeOverlay();
+
+      document.getElementById('section-title-left').innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping"></span> SOROTAN GURU MENGAJAR (LIVE COVER FLOW)`;
+      document.getElementById('section-title-right').innerHTML = `<span>📜</span> RINGKASAN KBM AKTIF JAM INI`;
+    }
+
+    const currentKey = activeJadwalList.map(item => item.id_guru + item.kelas + item.jam_mulai).join('|') + `_${isIdleTomorrowMode}`;
+
+    if (lastSummaryKey !== currentKey) {
+      renderSummaryPrompterView();
+      lastSummaryKey = currentKey;
+    }
+
+    if (lastRenderedKey !== currentKey) {
+      currentJadwalIndex = 0;
+      renderCoverflowDOM(menitSekarangIstiwa);
+      lastRenderedKey = currentKey;
+    } else {
+      updateCoverflowPositions();
+      updateCoverProgressBar(menitSekarangIstiwa);
+    }
+
+    renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList);
+  }
+
+  function triggerBreakModeOverlay() {
+    const modal = document.getElementById('modal-break-mode');
+    if (!isBreakModeActive) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      modal.classList.remove('wiping-exit');
+      isBreakModeActive = true;
+      isWipingExit = false;
+    }
+  }
+
+  function dismissBreakModeOverlay() {
+    const modal = document.getElementById('modal-break-mode');
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+    modal.classList.remove('wiping-exit');
+    isBreakModeActive = false;
+    isWipingExit = false;
+  }
+
+  function updateCoverProgressBar(menitSekarangIstiwa) {
+    if (isIdleTomorrowMode || activeJadwalList.length === 0) return;
+    
+    activeJadwalList.forEach((item, idx) => {
+      const card = document.getElementById(`cover-card-${idx}`);
+      if (!card) return;
+      const pBar = card.querySelector('.kbm-progress-bar');
+      if (!pBar) return;
+
+      const startMin = timeToMinutes(item.jam_mulai);
+      const endMin = timeToMinutes(item.jam_selesai);
+      if (startMin !== -1 && endMin !== -1 && endMin > startMin) {
+        const elapsed = Math.max(0, menitSekarangIstiwa - startMin);
+        const totalDur = endMin - startMin;
+        const pct = Math.min(100, Math.round((elapsed / totalDur) * 100));
+        pBar.style.width = `${pct}%`;
+      }
+    });
+  }
+
+  function renderCoverflowDOM(menitSekarangIstiwa) {
+    const stage = document.getElementById('coverflow-stage');
+    const counter = document.getElementById('counter-rolling');
+
+    if (activeJadwalList.length === 0) {
+      counter.innerText = '0 / 0';
+      stage.innerHTML = `
+        <div class="text-center py-12 px-6">
+          <div class="text-6xl mb-4">🕌</div>
+          <h3 class="text-2xl font-black text-emerald-800 mb-2">Pondok Pesantren</h3>
+          <p class="text-slate-500 text-sm max-w-sm mx-auto">Sistem berada dalam mode pemantauan Waktu Istiwa. Tidak ada jadwal KBM aktif untuk ditampilkan saat ini.</p>
+        </div>
+      `;
+      return;
+    }
+
+    stage.innerHTML = activeJadwalList.map((item, idx) => {
+      const fotoUrl = getDirectDriveImg(item.guru.foto);
+      const statusBadge = getStatusGuruBadge(item.guru.status_guru, false);
+
+      let progressBarHtml = "";
+      if (!isIdleTomorrowMode) {
+        const startMin = timeToMinutes(item.jam_mulai);
+        const endMin = timeToMinutes(item.jam_selesai);
+        if (startMin !== -1 && endMin !== -1 && endMin > startMin) {
+          const elapsed = Math.max(0, menitSekarangIstiwa - startMin);
+          const totalDur = endMin - startMin;
+          const pct = Math.min(100, Math.round((elapsed / totalDur) * 100));
+
+          progressBarHtml = `
+            <div class="w-full bg-slate-200/80 rounded-full h-2 mb-3 overflow-hidden shadow-inner">
+              <div class="kbm-progress-bar bg-gradient-to-r from-emerald-500 to-teal-600 h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          `;
+        }
+      }
+
+      return `
+        <div class="coverflow-card hidden-right" id="cover-card-${idx}">
+          <div class="flex flex-col items-center text-center">
+            <div class="relative mb-3">
+              <div class="w-32 h-32 md:w-40 md:h-40 rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-slate-100">
+                <img src="${fotoUrl}" alt="${item.guru.nama_guru}" class="w-full h-full object-cover" onError="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+              </div>
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                ${statusBadge}
+              </div>
+            </div>
+
+            <div class="inline-block bg-emerald-100 text-emerald-900 font-extrabold text-xs px-3.5 py-1 rounded-lg mb-2 shadow-sm border border-emerald-300">
+              ⏱ ${item.jam_mulai} - ${item.jam_selesai} (Istiwa)
+            </div>
+
+            ${progressBarHtml}
+
+            <div class="min-h-[3.5rem] flex items-center justify-center text-center mb-1">
+              <h2 class="text-lg md:text-xl font-black text-emerald-950 leading-tight">
+                ${item.guru.nama_guru || item.id_guru}
+              </h2>
+            </div>
+
+            <p class="text-emerald-700 font-bold text-sm md:text-base mb-3 leading-tight">${item.mapel || '-'}</p>
+
+            <div class="grid grid-cols-2 gap-3 w-full">
+              <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60 shadow-inner">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block">Kelas</span>
+                <span class="text-lg font-black text-emerald-800">${item.kelas || '-'}</span>
+              </div>
+              <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60 shadow-inner">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block">Ruangan</span>
+                <span class="text-lg font-black text-teal-800">${item.ruang || '-'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    updateCoverflowPositions();
+  }
+
+  function updateCoverflowPositions() {
+    const total = activeJadwalList.length;
+    if (total === 0) return;
+    document.getElementById('counter-rolling').innerText = `${currentJadwalIndex + 1} / ${total}`;
+
+    for (let i = 0; i < total; i++) {
+      const card = document.getElementById(`cover-card-${i}`);
+      if (!card) continue;
+      let diff = (i - currentJadwalIndex + total) % total;
+      if (diff > total / 2) diff -= total;
+
+      if (diff === 0) card.className = "coverflow-card active";
+      else if (diff === -1 || (diff === total - 1 && total > 2)) card.className = "coverflow-card prev";
+      else if (diff === 1 || (diff === -(total - 1) && total > 2)) card.className = "coverflow-card next";
+      else if (diff < 0) card.className = "coverflow-card hidden-left";
+      else card.className = "coverflow-card hidden-right";
+    }
+  }
+
+  if (!coverflowTimer) {
+    coverflowTimer = setInterval(() => {
+      if (activeJadwalList.length > 0) {
+        currentJadwalIndex = (currentJadwalIndex + 1) % activeJadwalList.length;
         updateCoverflowPositions();
       }
+    }, 4000);
+  }
 
-      renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList);
+  function renderSummaryPrompterView() {
+    const container = document.getElementById('summary-cards-container');
+
+    if (activeJadwalList.length === 0) {
+      container.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-16 text-center">
+          <div class="text-5xl mb-3">📖</div>
+          <h4 class="font-extrabold text-slate-700 text-base mb-1">Tidak Ada KBM Aktif</h4>
+          <p class="text-xs text-slate-400 max-w-xs">Seluruh santri dan ustadz dapat memanfaatkan waktu untuk ibadah atau istirahat.</p>
+        </div>
+      `;
+      return;
     }
 
-    function triggerBreakModeOverlay(nextKbmStartMinutes, menitSekarangIstiwa, detikSekarang) {
-      const modal = document.getElementById('modal-break-mode');
-      const timerText = document.getElementById('break-next-kbm-timer');
+    const buildRow = (j, i) => {
+      const statusBadge = getStatusGuruBadge(j.guru.status_guru, true);
+      const bgClass = (i % 2 === 0) ? 'bg-white/95' : 'bg-emerald-50/70';
 
-      if (!isBreakModeActive) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        modal.classList.remove('wiping-exit');
-        isBreakModeActive = true;
-        isWipingExit = false;
-      }
-
-      if (nextKbmStartMinutes !== -1) {
-        const diffMinutes = nextKbmStartMinutes - menitSekarangIstiwa - 1;
-        const diffSecs = 60 - detikSekarang;
-        const totalRemainingSec = (diffMinutes * 60) + diffSecs;
-
-        const m = String(Math.max(0, Math.floor(totalRemainingSec / 60))).padStart(2, '0');
-        const s = String(Math.max(0, totalRemainingSec % 60)).padStart(2, '0');
-        if (timerText) timerText.innerText = `⏳ KBM Selanjutnya dimulai dalam: ${m}:${s}`;
-
-        if (totalRemainingSec <= 60 && totalRemainingSec > 0 && !isWipingExit) {
-          isWipingExit = true;
-          modal.classList.add('wiping-exit');
-          setTimeout(() => {
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-            isBreakModeActive = false;
-          }, 1500);
-        }
-      } else {
-        if (timerText) timerText.innerText = `🌙 Tidak ada KBM tersisa hari ini.`;
-      }
-    }
-
-    function dismissBreakModeOverlay() {
-      const modal = document.getElementById('modal-break-mode');
-      if (isBreakModeActive) {
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-        modal.classList.remove('wiping-exit');
-        isBreakModeActive = false;
-        isWipingExit = false;
-      }
-    }
-
-    function renderCoverflowDOM(menitSekarangIstiwa) {
-      const stage = document.getElementById('coverflow-stage');
-      const counter = document.getElementById('counter-rolling');
-
-      if (activeJadwalList.length === 0) {
-        counter.innerText = '0 / 0';
-        stage.innerHTML = `
-          <div class="text-center py-12 px-6">
-            <div class="text-6xl mb-4">🕌</div>
-            <h3 class="text-2xl font-black text-emerald-800 mb-2">Pondok Pesantren</h3>
-            <p class="text-slate-500 text-sm max-w-sm mx-auto">Sistem berada dalam mode pemantauan Waktu Istiwa. Tidak ada jadwal KBM aktif untuk ditampilkan saat ini.</p>
+      return `
+        <div class="grid grid-cols-12 gap-3 items-center py-2.5 px-3 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm mb-2">
+          <div class="col-span-2">
+            <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-xs md:text-sm px-2 py-1.5 rounded-xl shadow-md inline-block text-center w-full">
+              ${j.kelas || '-'}
+            </span>
           </div>
-        `;
-        return;
-      }
 
-      stage.innerHTML = activeJadwalList.map((item, idx) => {
-        const fotoUrl = getDirectDriveImg(item.guru.foto);
-        const statusBadge = getStatusGuruBadge(item.guru.status_guru, false);
+          <div class="col-span-4 pl-1">
+            <h3 class="font-extrabold text-slate-900 text-xs md:text-sm leading-snug">
+              ${j.mapel || '-'}
+            </h3>
+            <span class="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block">Mata Pelajaran</span>
+          </div>
 
-        let progressBarHtml = "";
-        if (!isIdleTomorrowMode) {
-          const startMin = timeToMinutes(item.jam_mulai);
-          const endMin = timeToMinutes(item.jam_selesai);
-          if (startMin !== -1 && endMin !== -1 && endMin > startMin) {
-            const elapsed = Math.max(0, menitSekarangIstiwa - startMin);
-            const totalDur = endMin - startMin;
-            const pct = Math.min(100, Math.round((elapsed / totalDur) * 100));
-
-            progressBarHtml = `
-              <div class="w-full bg-slate-200/80 rounded-full h-2 mb-3 overflow-hidden shadow-inner">
-                <div class="bg-gradient-to-r from-emerald-500 to-teal-600 h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
-              </div>
-            `;
-          }
-        }
-
-        return `
-          <div class="coverflow-card hidden-right" id="cover-card-${idx}">
-            <div class="flex flex-col items-center text-center">
-              <div class="relative mb-3">
-                <div class="w-32 h-32 md:w-40 md:h-40 rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-slate-100">
-                  <img src="${fotoUrl}" alt="${item.guru.nama_guru}" class="w-full h-full object-cover" onError="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
-                </div>
-                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                  ${statusBadge}
-                </div>
-              </div>
-
-              <div class="inline-block bg-emerald-100 text-emerald-900 font-extrabold text-xs px-3.5 py-1 rounded-lg mb-2 shadow-sm border border-emerald-300">
-                ⏱ ${item.jam_mulai} - ${item.jam_selesai} (Istiwa)
-              </div>
-
-              ${progressBarHtml}
-
-              <div class="min-h-[3.5rem] flex items-center justify-center text-center mb-1">
-                <h2 class="text-lg md:text-xl font-black text-emerald-950 leading-tight">
-                  ${item.guru.nama_guru || item.id_guru}
-                </h2>
-              </div>
-
-              <p class="text-emerald-700 font-bold text-sm md:text-base mb-3 leading-tight">${item.mapel || '-'}</p>
-
-              <div class="grid grid-cols-2 gap-3 w-full">
-                <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60 shadow-inner">
-                  <span class="text-[10px] uppercase font-bold text-slate-400 block">Kelas</span>
-                  <span class="text-lg font-black text-emerald-800">${item.kelas || '-'}</span>
-                </div>
-                <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60 shadow-inner">
-                  <span class="text-[10px] uppercase font-bold text-slate-400 block">Ruangan</span>
-                  <span class="text-lg font-black text-teal-800">${item.ruang || '-'}</span>
-                </div>
-              </div>
+          <div class="col-span-4">
+            <div class="font-bold text-slate-800 text-xs leading-tight mb-1">${j.guru.nama_guru || j.id_guru}</div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              ${statusBadge}
+              <span class="text-[9px] text-slate-400 font-mono font-bold">(${j.jam_mulai}-${j.jam_selesai})</span>
             </div>
           </div>
-        `;
-      }).join('');
 
-      updateCoverflowPositions();
+          <div class="col-span-2 text-right">
+            <span class="bg-emerald-100 text-emerald-900 font-black text-xs px-2.5 py-1.5 rounded-xl border border-emerald-300 inline-block">
+              ${j.ruang || '-'}
+            </span>
+          </div>
+        </div>
+      `;
+    };
+
+    const rowsOriginal = activeJadwalList.map((j, i) => buildRow(j, i)).join('');
+
+    let finalContent = rowsOriginal;
+    if (activeJadwalList.length > 3) {
+      finalContent = rowsOriginal + rowsOriginal;
+      const scrollDuration = Math.max(18, activeJadwalList.length * 4.5);
+      container.style.setProperty('--prompter-duration', `${scrollDuration}s`);
+      container.className = "animate-prompter-scroll w-full";
+    } else {
+      container.className = "w-full";
     }
 
-    function updateCoverflowPositions() {
-      const total = activeJadwalList.length;
-      if (total === 0) return;
-      document.getElementById('counter-rolling').innerText = `${currentJadwalIndex + 1} / ${total}`;
+    container.innerHTML = finalContent;
+  }
 
-      for (let i = 0; i < total; i++) {
-        const card = document.getElementById(`cover-card-${i}`);
-        if (!card) continue;
-        let diff = (i - currentJadwalIndex + total) % total;
-        if (diff > total / 2) diff -= total;
+  let lastPiketKey = "";
 
-        if (diff === 0) card.className = "coverflow-card active";
-        else if (diff === -1 || (diff === total - 1 && total > 2)) card.className = "coverflow-card prev";
-        else if (diff === 1 || (diff === -(total - 1) && total > 2)) card.className = "coverflow-card next";
-        else if (diff < 0) card.className = "coverflow-card hidden-left";
-        else card.className = "coverflow-card hidden-right";
-      }
+  function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
+    const piketTicker = document.getElementById('piket-ticker');
+    if (!piketTicker) return;
+
+    let piketAktif = jadwalPiketList.filter(p => {
+      if (cleanDayStr(p.hari) !== hariIniKapital) return false;
+      const start = timeToMinutes(p.jam_mulai), end = timeToMinutes(p.jam_selesai);
+      if (start === -1 || end === -1) return false;
+      return menitSekarangIstiwa >= start && menitSekarangIstiwa < end;
+    });
+
+    if (piketAktif.length === 0) {
+      piketAktif = jadwalPiketList.filter(p => cleanDayStr(p.hari) === hariIniKapital);
     }
 
-    if (!coverflowTimer) {
-      coverflowTimer = setInterval(() => {
-        if (activeJadwalList.length > 0) {
-          currentJadwalIndex = (currentJadwalIndex + 1) % activeJadwalList.length;
-          updateCoverflowPositions();
-        }
-      }, 4000);
-    }
+    const currentPiketKey = piketAktif.map(p => p.id_guru + p.jam_mulai + p.jam_selesai).join('|') + `_${hariIniKapital}`;
+    
+    if (lastPiketKey === currentPiketKey) return;
+    lastPiketKey = currentPiketKey;
 
-    function renderSummaryPrompterView() {
-      const container = document.getElementById('summary-cards-container');
-
-      if (activeJadwalList.length === 0) {
-        container.innerHTML = `
-          <div class="flex flex-col items-center justify-center py-16 text-center">
-            <div class="text-5xl mb-3">📖</div>
-            <h4 class="font-extrabold text-slate-700 text-base mb-1">Tidak Ada KBM Aktif</h4>
-            <p class="text-xs text-slate-400 max-w-xs">Seluruh santri dan ustadz dapat memanfaatkan waktu untuk ibadah atau istirahat.</p>
-          </div>
-        `;
-        return;
-      }
-
-      const buildRow = (j, i) => {
-        const statusBadge = getStatusGuruBadge(j.guru.status_guru, true);
-        const bgClass = (i % 2 === 0) ? 'bg-white/95' : 'bg-emerald-50/70';
-
-        return `
-          <div class="grid grid-cols-12 gap-3 items-center py-2.5 px-3 rounded-2xl ${bgClass} border border-slate-200/80 shadow-sm mb-2">
-            <div class="col-span-2">
-              <span class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white font-black text-xs md:text-sm px-2 py-1.5 rounded-xl shadow-md inline-block text-center w-full">
-                ${j.kelas || '-'}
-              </span>
-            </div>
-
-            <div class="col-span-4 pl-1">
-              <h3 class="font-extrabold text-slate-900 text-xs md:text-sm leading-snug">
-                ${j.mapel || '-'}
-              </h3>
-              <span class="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block">Mata Pelajaran</span>
-            </div>
-
-            <div class="col-span-4">
-              <div class="font-bold text-slate-800 text-xs leading-tight mb-1">${j.guru.nama_guru || j.id_guru}</div>
-              <div class="flex items-center gap-1.5 flex-wrap">
-                ${statusBadge}
-                <span class="text-[9px] text-slate-400 font-mono font-bold">(${j.jam_mulai}-${j.jam_selesai})</span>
-              </div>
-            </div>
-
-            <div class="col-span-2 text-right">
-              <span class="bg-emerald-100 text-emerald-900 font-black text-xs px-2.5 py-1.5 rounded-xl border border-emerald-300 inline-block">
-                ${j.ruang || '-'}
-              </span>
-            </div>
-          </div>
-        `;
-      };
-
-      const rowsOriginal = activeJadwalList.map((j, i) => buildRow(j, i)).join('');
-
-      let finalContent = rowsOriginal;
-      if (activeJadwalList.length > 3) {
-        finalContent = rowsOriginal + rowsOriginal;
-        const scrollDuration = Math.max(18, activeJadwalList.length * 4.5);
-        container.style.setProperty('--prompter-duration', `${scrollDuration}s`);
-        container.className = "animate-prompter-scroll w-full";
-      } else {
-        container.className = "w-full";
-      }
-
-      container.innerHTML = finalContent;
-    }
-
-    let lastPiketKey = "";
-
-    function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
-      const piketTicker = document.getElementById('piket-ticker');
-      if (!piketTicker) return;
-
-      let piketAktif = jadwalPiketList.filter(p => {
-        if (cleanDayStr(p.hari) !== hariIniKapital) return false;
-        const start = timeToMinutes(p.jam_mulai), end = timeToMinutes(p.jam_selesai);
-        if (start === -1 || end === -1) return false;
-        return menitSekarangIstiwa >= start && menitSekarangIstiwa < end;
-      });
-
-      if (piketAktif.length === 0) {
-        piketAktif = jadwalPiketList.filter(p => cleanDayStr(p.hari) === hariIniKapital);
-      }
-
-      const currentPiketKey = piketAktif.map(p => p.id_guru + p.jam_mulai + p.jam_selesai).join('|') + `_${hariIniKapital}`;
-      
-      if (lastPiketKey === currentPiketKey) return;
-      lastPiketKey = currentPiketKey;
-
-      if (piketAktif.length === 0) {
-        piketTicker.className = "animate-marquee flex items-center gap-8 font-semibold text-slate-700 text-sm";
-        piketTicker.innerHTML = `
-          <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
-            <span class="text-emerald-800 font-bold">✨ "Man Jadda Wajada" — Barangsiapa bersungguh-sungguh, maka ia akan berhasil.</span>
-          </div>
-          <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
-            <span class="text-emerald-800 font-bold">📢 Jagalah kebersihan, kerapian, dan ketertiban di lingkungan pondok pesantren.</span>
-          </div>
-        `;
-        return;
-      }
-
+    if (piketAktif.length === 0) {
       piketTicker.className = "animate-marquee flex items-center gap-8 font-semibold text-slate-700 text-sm";
-      piketTicker.innerHTML = piketAktif.map(p => {
-        const guru = guruMap[p.id_guru] || { nama_guru: p.id_guru };
-        return `
-          <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
-            <span class="text-emerald-800 font-bold">👤 ${guru.nama_guru || p.id_guru}</span>
-            <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Area: ${p.area_piket || 'Utama'}</span>
-            <span class="text-xs text-slate-500 font-mono">(${p.jam_mulai}-${p.jam_selesai})</span>
-          </div>
-        `;
-      }).join(' &nbsp;•&nbsp; ');
+      piketTicker.innerHTML = `
+        <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
+          <span class="text-emerald-800 font-bold">✨ "Man Jadda Wajada" — Barangsiapa bersungguh-sungguh, maka ia akan berhasil.</span>
+        </div>
+        <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
+          <span class="text-emerald-800 font-bold">📢 Jagalah kebersihan, kerapian, dan ketertiban di lingkungan pondok pesantren.</span>
+        </div>
+      `;
+      return;
     }
 
-    setInterval(fetchData, 180000);
-    setInterval(processData, 10000);
-    fetchData();
-  </script>
+    piketTicker.className = "animate-marquee flex items-center gap-8 font-semibold text-slate-700 text-sm";
+    piketTicker.innerHTML = piketAktif.map(p => {
+      const guru = guruMap[p.id_guru] || { nama_guru: p.id_guru };
+      return `
+        <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
+          <span class="text-emerald-800 font-bold">👤 ${guru.nama_guru || p.id_guru}</span>
+          <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Area: ${p.area_piket || 'Utama'}</span>
+          <span class="text-xs text-slate-500 font-mono">(${p.jam_mulai}-${p.jam_selesai})</span>
+        </div>
+      `;
+    }).join(' &nbsp;•&nbsp; ');
+  }
+
+  setInterval(fetchData, 180000);
+  setInterval(processData, 10000);
+  fetchData();
+</script>
 </body>
 </html>
