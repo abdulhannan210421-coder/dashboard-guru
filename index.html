@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Digital Signage - Jadwal Guru & Waktu Sholat Falak Realtime</title>
 
+  <!-- webOS TV JS Library -->
+<script src="https://assets.webosenterprise.org/webOSTVjs/webOSTV.js"></script>
+  
   <!-- Tailwind CSS & Font Clean Modern -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -465,6 +468,36 @@
       fetchData();
     });
 
+    function disableWebOSScreensaver() {
+  if (window.webOS && window.webOS.service) {
+    // Lock layar agar tidak pernah masuk mode Sleep/Screensaver
+    webOS.service.request("luna://com.webos.service.tv.power", {
+      method: "keepScreenOn",
+      parameters: { keepScreenOn: true },
+      onSuccess: function (res) {
+        console.log("KeepScreenOn Aktif:", res);
+      },
+      onFailure: function (err) {
+        console.warn("KeepScreenOn Gagal:", err);
+      }
+    });
+
+    // Blokir fungsi screensaver internal webOS
+    webOS.service.request("luna://com.webos.service.power", {
+      method: "blockScreensaver",
+      parameters: { subscribe: true },
+      onSuccess: function (res) {
+        console.log("Screensaver Terblokir:", res);
+      }
+    });
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  disableWebOSScreensaver();
+  setInterval(disableWebOSScreensaver, 1800000); // Panggil ulang tiap 30 menit
+});
+    
 // ======================================================
 // KEEP-ALIVE ENGINE OPTIMIZED FOR LG webOS
 // ======================================================
