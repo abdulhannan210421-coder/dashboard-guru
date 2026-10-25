@@ -172,18 +172,18 @@
 </head>
 <body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
 
-  <!-- VIDEO KEEP-ALIVE TV (ENGINE YOUTUBE SIMULATION UNTUK MENCEGAH SLEEP/SCREENSAVER) -->
+<!-- VIDEO KEEP-ALIVE (Dipasang di pojok kanan bawah, z-index di atas modal agar GPU TV tidak mem-suspend video) -->
 <video id="bg-keepalive-video"
        autoplay
        loop
        muted
        playsinline
        webkit-playsinline
-       class="fixed bottom-0 right-0 w-4 h-4 object-cover z-30 opacity-10 pointer-events-none">
+       class="fixed bottom-1 right-1 w-2 h-2 object-cover z-[100] opacity-10 pointer-events-none">
   <source src="keepalive.mp4" type="video/mp4">
   <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
 </video>
-
+  
   <!-- Audio Element Adzan -->
   <audio id="audio-adzan" preload="auto">
     <source src="adzan.mp3" type="audio/mpeg">
