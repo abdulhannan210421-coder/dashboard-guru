@@ -447,83 +447,86 @@
       }
     }
 
-    // ======================================================
-    // KEEP-ALIVE VIDEO ENGINE (DIOPTIMASI UNTUK BROWSER SMART TV)
-    // ======================================================
-    let keepAliveVideo = null;
+// ======================================================
+// ROBUST HARDWARE KEEP-ALIVE ENGINE (BASE64 H.264 VIDEO)
+// Mengunci Hardware Video Decoder TV LG 100% Tanpa File Eksternal
+// ======================================================
 
-    function setupVideoKeepAlive() {
-      keepAliveVideo = document.getElementById('bg-keepalive-video');
-      if (!keepAliveVideo) return;
+// Video H.264 ultra-ringan 1x1 piksel (Base64)
+const SILENT_VIDEO_BASE64 = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAAptZGF0AAACrgYF//+/3gAe2YgRACAAAD6AAB9gAAfQAAAAAMh2YWNjQzEAAQB4AB7/AAAAFHhoY2gxAAAAAAIAAAACAAAAAAAPbXZoZAAAAADcxIAAXMSAAAEAAAABAAAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAzB0cmFjawAAAAEAAADcxIAAXMSAAAEAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAC1dGtoZAAAAAEAAAAAxIAAXMSAAAEAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAABD21kaWEAAAAgbWRoZAAAAADcxIAAXMSAAAEAAAAAAAABAAAAAQAAAAAAAABoZGxyAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABbWluZgAAABR2aGtkAAAAAQAAAAAAAABAAAAAABRkaW5mAAAAHGRyZWYAAAAAAAEAAAAMdXJsIAAAAAEAAAEdc3RibAAAAGxzdHNkAAAAAAABAAAAgGF2YzEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAHAAsAEgAAABIAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY//8AAAAic3R0cwAAAAAAAAABAAAAAQAAAAEAAAAAAAABc3RzcwAAAAAAAAABAAAAAQAAABRzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAjc3RzeiAAAAAAAAAAAAAAAQAAAA4AAAAUc3RjbwAAAAAAAAABAAAAHAAAACJ1ZHRhAAAAInitiYWlidAAAAEAAAAAAAAAABAAAAAAA=";
 
-      keepAliveVideo.muted = true;
-      keepAliveVideo.volume = 0.0001;
-      keepAliveVideo.playsInline = true;
+let keepAliveVideo = null;
 
-      keepAliveVideo.addEventListener('ended', () => {
-        keepAliveVideo.play().catch(() => {});
-      });
+function setupVideoKeepAlive() {
+  keepAliveVideo = document.getElementById('bg-keepalive-video');
+  if (!keepAliveVideo) return;
 
-      keepAliveVideo.addEventListener('pause', () => {
-        setTimeout(() => {
-          keepAliveVideo.play().catch(() => {});
-        }, 1000);
-      });
+  // Pasang Data URI langsung agar tidak terkendala koneksi internet/CORS
+  keepAliveVideo.src = SILENT_VIDEO_BASE64;
+  keepAliveVideo.muted = true;
+  keepAliveVideo.volume = 0.0001;
+  keepAliveVideo.playsInline = true;
 
-      keepAliveVideo.addEventListener('error', () => {
-        setTimeout(() => {
-          keepAliveVideo.load();
-          keepAliveVideo.play().catch(() => {});
-        }, 2000);
-      });
+  const forcePlay = () => {
+    keepAliveVideo.play().then(() => {
+      // Daftarkan Media Session API agar webOS mendeteksi tayangan media aktif
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
+    }).catch(() => {});
+  };
 
-      keepAliveVideo.play().catch(() => {});
+  keepAliveVideo.addEventListener('ended', forcePlay);
+  keepAliveVideo.addEventListener('pause', () => setTimeout(forcePlay, 1000));
+  keepAliveVideo.addEventListener('error', () => {
+    keepAliveVideo.src = SILENT_VIDEO_BASE64;
+    forcePlay();
+  });
+
+  forcePlay();
+}
+
+// Re-check berkala agar Hardware Decoder tetap terkunci aktif
+setInterval(() => {
+  if (keepAliveVideo && keepAliveVideo.paused) {
+    keepAliveVideo.play().catch(() => {});
+  }
+}, 5000);
+
+window.addEventListener('DOMContentLoaded', () => {
+  setupVideoKeepAlive();
+});
+
+// Handling Interaksi Remote Pertama
+let audioUnlocked = false;
+function handleTVInteraction() {
+  startSilentAudioEngine();
+
+  if (keepAliveVideo && keepAliveVideo.paused) {
+    keepAliveVideo.play().catch(() => {});
+  }
+
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+
+  if (!audioUnlocked) {
+    const audio = document.getElementById('audio-adzan');
+    if (audio) {
+      audio.play().then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audioUnlocked = true;
+        const banner = document.getElementById('banner-audio-notice');
+        if (banner) banner.style.display = 'none';
+      }).catch(() => {});
     }
+  }
+}
 
-    setInterval(() => {
-      if (keepAliveVideo && keepAliveVideo.paused) {
-        keepAliveVideo.play().catch(() => {});
-      }
-    }, 10000);
-
-    window.addEventListener('DOMContentLoaded', () => {
-      setupVideoKeepAlive();
-    });
-
-    // UNLOCK AUDIO + AKTIFKAN KUNCI LAYAR SAAT INTERAKSI PERTAMA REMOTE
-    let audioUnlocked = false;
-    function handleTVInteraction() {
-      // 1. Jalankan Silent Audio Engine (Mengunci Power Manager TV)
-      startSilentAudioEngine();
-
-      // 2. Pertahankan Play Video
-      if (keepAliveVideo && keepAliveVideo.paused) {
-        keepAliveVideo.play().catch(() => {});
-      }
-
-      // 3. Masuk Fullscreen
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }
-
-      // 4. Unlock Audio Adzan
-      if (!audioUnlocked) {
-        const audio = document.getElementById('audio-adzan');
-        if (audio) {
-          audio.play().then(() => {
-            audio.pause();
-            audio.currentTime = 0;
-            audioUnlocked = true;
-            const banner = document.getElementById('banner-audio-notice');
-            if (banner) banner.style.display = 'none';
-          }).catch(() => {});
-        }
-      }
-    }
-
-    window.addEventListener('click', handleTVInteraction);
-    window.addEventListener('keydown', handleTVInteraction);
-    window.addEventListener('touchstart', handleTVInteraction);
+window.addEventListener('click', handleTVInteraction);
+window.addEventListener('keydown', handleTVInteraction);
+window.addEventListener('touchstart', handleTVInteraction);
 
     // FALAK MANDIRI DATABASE
     const DATABASE_BULAN = {
@@ -1507,44 +1510,55 @@
       container.innerHTML = finalContent;
     }
 
-    function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
-      const piketTicker = document.getElementById('piket-ticker');
-      let piketAktif = jadwalPiketList.filter(p => {
-        if (cleanDayStr(p.hari) !== hariIniKapital) return false;
-        const start = timeToMinutes(p.jam_mulai), end = timeToMinutes(p.jam_selesai);
-        if (start === -1 || end === -1) return false;
-        return menitSekarangIstiwa >= start && menitSekarangIstiwa < end;
-      });
+let lastPiketKey = ""; // Variabel cache pencegah memory leak ticker
 
-      if (piketAktif.length === 0) {
-        piketAktif = jadwalPiketList.filter(p => cleanDayStr(p.hari) === hariIniKapital);
-      }
+function renderGuruPiket(hariIniKapital, menitSekarangIstiwa, guruMap, jadwalPiketList) {
+  const piketTicker = document.getElementById('piket-ticker');
+  if (!piketTicker) return;
 
-      if (piketAktif.length === 0) {
-        piketTicker.className = "animate-marquee flex items-center gap-8 font-semibold text-slate-700 text-sm";
-        piketTicker.innerHTML = `
-          <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
-            <span class="text-emerald-800 font-bold">✨ "Man Jadda Wajada" — Barangsiapa bersungguh-sungguh, maka ia akan berhasil.</span>
-          </div>
-          <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
-            <span class="text-emerald-800 font-bold">📢 Jagalah kebersihan, kerapian, dan ketertiban di lingkungan pondok pesantren.</span>
-          </div>
-        `;
-        return;
-      }
+  let piketAktif = jadwalPiketList.filter(p => {
+    if (cleanDayStr(p.hari) !== hariIniKapital) return false;
+    const start = timeToMinutes(p.jam_mulai), end = timeToMinutes(p.jam_selesai);
+    if (start === -1 || end === -1) return false;
+    return menitSekarangIstiwa >= start && menitSekarangIstiwa < end;
+  });
 
-      piketTicker.className = "animate-marquee flex items-center gap-8 font-semibold text-slate-700 text-sm";
-      piketTicker.innerHTML = piketAktif.map(p => {
-        const guru = guruMap[p.id_guru] || { nama_guru: p.id_guru };
-        return `
-          <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
-            <span class="text-emerald-800 font-bold">👤 ${guru.nama_guru || p.id_guru}</span>
-            <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Area: ${p.area_piket || 'Utama'}</span>
-            <span class="text-xs text-slate-500 font-mono">(${p.jam_mulai}-${p.jam_selesai})</span>
-          </div>
-        `;
-      }).join(' &nbsp;•&nbsp; ');
-    }
+  if (piketAktif.length === 0) {
+    piketAktif = jadwalPiketList.filter(p => cleanDayStr(p.hari) === hariIniKapital);
+  }
+
+  // Buat kunci unik untuk mendeteksi perubahan data piket
+  const currentPiketKey = piketAktif.map(p => p.id_guru + p.jam_mulai + p.jam_selesai).join('|') + `_${hariIniKapital}`;
+  
+  // Jika data piket tidak berubah, JANGAN timpa DOM (hemat RAM TV)
+  if (lastPiketKey === currentPiketKey) return;
+  lastPiketKey = currentPiketKey;
+
+  if (piketAktif.length === 0) {
+    piketTicker.className = "animate-marquee flex items-center gap-8 font-semibold text-slate-700 text-sm";
+    piketTicker.innerHTML = `
+      <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
+        <span class="text-emerald-800 font-bold">✨ "Man Jadda Wajada" — Barangsiapa bersungguh-sungguh, maka ia akan berhasil.</span>
+      </div>
+      <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
+        <span class="text-emerald-800 font-bold">📢 Jagalah kebersihan, kerapian, dan ketertiban di lingkungan pondok pesantren.</span>
+      </div>
+    `;
+    return;
+  }
+
+  piketTicker.className = "animate-marquee flex items-center gap-8 font-semibold text-slate-700 text-sm";
+  piketTicker.innerHTML = piketAktif.map(p => {
+    const guru = guruMap[p.id_guru] || { nama_guru: p.id_guru };
+    return `
+      <div class="flex items-center gap-2 bg-white/90 px-4 py-1.5 rounded-xl border border-emerald-200 shadow-sm flex-shrink-0">
+        <span class="text-emerald-800 font-bold">👤 ${guru.nama_guru || p.id_guru}</span>
+        <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Area: ${p.area_piket || 'Utama'}</span>
+        <span class="text-xs text-slate-500 font-mono">(${p.jam_mulai}-${p.jam_selesai})</span>
+      </div>
+    `;
+  }).join(' &nbsp;•&nbsp; ');
+}
 
     setInterval(fetchData, 180000);
     setInterval(processData, 10000);
