@@ -62,7 +62,6 @@
       background: rgba(255, 255, 255, 0.97);
       border: 2px solid rgba(255, 255, 255, 0.9);
       box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.12);
-      will-change: transform, opacity;
     }
 
     body.dark-mode .coverflow-card {
@@ -124,8 +123,6 @@
 
     .animate-prompter-scroll {
       animation: prompterContinuousScroll var(--prompter-duration, 30s) linear infinite;
-      will-change: transform;
-      backface-visibility: hidden;
     }
 
     .animate-prompter-scroll:hover {
@@ -144,17 +141,6 @@
 </head>
 <body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
 
-  <!-- VIDEO KEEP-ALIVE -->
-  <video id="bg-keepalive-video"
-         autoplay
-         loop
-         muted
-         playsinline
-         webkit-playsinline
-         style="position: fixed; bottom: 0; right: 0; width: 20px; height: 20px; opacity: 0.05; z-index: -1; pointer-events: none;">
-    <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
-  </video>
-  
   <!-- Audio Element Adzan -->
   <audio id="audio-adzan" preload="auto">
     <source src="adzan.mp3" type="audio/mpeg">
@@ -446,51 +432,12 @@
         source.loop = true;
         source.connect(audioCtx.destination);
         source.start(0);
-        console.log("Silent Audio Engine Aktif (Screensaver TV Terkunci OFF)");
+        console.log("Silent Audio Engine Aktif");
       }
     } catch (e) {
       console.warn("Silent Audio Engine gagal diinisialisasi:", e);
     }
   }
-
-  // ROBUST HARDWARE KEEP-ALIVE ENGINE (DENGAN FALLBACK BASE64 OFFLINE)
-  const SILENT_VIDEO_BASE64 = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAAptZGF0AAACrgYF//+/3gAe2YgRACAAAD6AAB9gAAfQAAAAAMh2YWNjQzEAAQB4AB7/AAAAFHhoY2gxAAAAAAIAAAACAAAAAAAPbXZoZAAAAADcxIAAXMSAAAEAAAABAAAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAzB0cmFjawAAAAEAAADcxIAAXMSAAAEAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAC1dGtoZAAAAAEAAAAAxIAAXMSAAAEAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAABD21kaWEAAAAgbWRoZAAAAADcxIAAXMSAAAEAAAAAAAABAAAAAQAAAAAAAABoZGxyAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABbWluZgAAABR2aGtkAAAAAQAAAAAAAABAAAAAABRkaW5mAAAAHGRyZWYAAAAAAAEAAAAMdXJsIAAAAAEAAAEdc3RibAAAAGxzdHNkAAAAAAABAAAAgGF2YzEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAHAAsAEgAAABIAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY//8AAAAic3R0cwAAAAAAAAABAAAAAQAAAAEAAAAAAAABc3RzcwAAAAAAAAABAAAAAQAAABRzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAjc3RzeiAAAAAAAAAAAAAAAQAAAA4AAAAUc3RjbwAAAAAAAAABAAAAHAAAACJ1ZHRhAAAAInitiYWlidAAAAEAAAAAAAAAABAAAAAAA=";
-
-  let keepAliveVideo = null;
-
-  function setupVideoKeepAlive() {
-    keepAliveVideo = document.getElementById('bg-keepalive-video');
-    if (!keepAliveVideo) return;
-
-    keepAliveVideo.muted = true;
-    keepAliveVideo.volume = 0.0001;
-    keepAliveVideo.playsInline = true;
-
-    const forcePlay = () => {
-      keepAliveVideo.play().then(() => {
-        if ('mediaSession' in navigator) {
-          navigator.mediaSession.playbackState = 'playing';
-        }
-      }).catch(() => {});
-    };
-
-    keepAliveVideo.addEventListener('ended', forcePlay);
-    keepAliveVideo.addEventListener('pause', () => setTimeout(forcePlay, 1000));
-    
-    keepAliveVideo.addEventListener('error', () => {
-      console.warn("Video Keep-Alive online error, mengalihkan ke fallback Base64...");
-      keepAliveVideo.src = SILENT_VIDEO_BASE64;
-      forcePlay();
-    });
-
-    forcePlay();
-  }
-
-  setInterval(() => {
-    if (keepAliveVideo && keepAliveVideo.paused) {
-      keepAliveVideo.play().catch(() => {});
-    }
-  }, 5000);
 
   // NATIVE SCREEN WAKE LOCK ENGINE
   let wakeLock = null;
@@ -517,17 +464,12 @@
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    setupVideoKeepAlive();
     requestScreenWakeLock();
   });
 
   function handleTVInteraction() {
     startSilentAudioEngine();
     requestScreenWakeLock();
-    
-    if (keepAliveVideo && keepAliveVideo.paused) {
-      keepAliveVideo.play().catch(() => {});
-    }
     
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
@@ -1172,6 +1114,8 @@
     return `${day} ${islamicMonths[month - 1]} ${year} H`;
   }
 
+  let lastMinuteCheck = -1;
+
   function updateClockAndDates() {
     const now = new Date();
     const istiwaNow = getIstiwaTime(now);
@@ -1186,7 +1130,8 @@
     const detikWIB = String(now.getSeconds()).padStart(2, '0');
     const timeWIBStr = `${jamWIB}:${menitWIB}:${detikWIB}`;
 
-    document.getElementById('live-clock').innerText = timeIstiwaStr;
+    const liveClock = document.getElementById('live-clock');
+    if (liveClock) liveClock.innerText = timeIstiwaStr;
 
     const breakIstiwaEl = document.getElementById('break-clock-istiwa');
     if (breakIstiwaEl) breakIstiwaEl.innerText = timeIstiwaStr;
@@ -1194,15 +1139,24 @@
     const breakWIBEl = document.getElementById('break-clock-wib');
     if (breakWIBEl) breakWIBEl.innerText = timeWIBStr;
 
-    const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    const dateStr = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()} M | ${getHijriDate(now)}`;
-    
-    document.getElementById('info-tanggal').innerText = dateStr;
-    const breakHijri = document.getElementById('break-hijri-date');
-    if (breakHijri) breakHijri.innerText = dateStr;
-
+    // 1. Dijalankan SETIAP DETIK agar countdown sholat & ribbon jam berdetak realtime
     updateHeaderPrayerRibbon();
+
+    // 2. Kalkulasi berat (Hijriah & Teks Tanggal Masehi) HANYA dieksekusi 1x saat MENIT berubah
+    const currentMinute = istiwaNow.getMinutes();
+    if (currentMinute !== lastMinuteCheck) {
+      lastMinuteCheck = currentMinute;
+
+      const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      const bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      const dateStr = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()} M | ${getHijriDate(now)}`;
+      
+      const infoTanggal = document.getElementById('info-tanggal');
+      if (infoTanggal) infoTanggal.innerText = dateStr;
+
+      const breakHijri = document.getElementById('break-hijri-date');
+      if (breakHijri) breakHijri.innerText = dateStr;
+    }
 
     // UPDATE TIMING BREAK MODE SECARA REALTIME SETIAP 1 DETIK
     if (isBreakModeActive && !isWipingExit) {
@@ -1219,28 +1173,30 @@
         const s = String(Math.max(0, totalRemainingSec % 60)).padStart(2, '0');
         if (timerText) timerText.innerText = `⏳ KBM Selanjutnya dimulai dalam: ${m}:${s}`;
 
-        // TRANSISI KELUAR 60 DETIK MENJELANG KBM
         if (totalRemainingSec <= 60 && totalRemainingSec > 0 && !isWipingExit) {
           isWipingExit = true;
           const modal = document.getElementById('modal-break-mode');
-          modal.classList.add('wiping-exit');
-          setTimeout(() => {
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-            modal.classList.remove('wiping-exit');
-            isBreakModeActive = false;
-          }, 1500);
+          if (modal) {
+            modal.classList.add('wiping-exit');
+            setTimeout(() => {
+              modal.classList.remove('flex');
+              modal.classList.add('hidden');
+              modal.classList.remove('wiping-exit');
+              isBreakModeActive = false;
+            }, 1500);
+          }
         }
       } else {
         if (timerText) timerText.innerText = `🌙 Tidak ada KBM tersisa hari ini.`;
       }
     }
 
-    const targetHours = ["00", "06", "12", "18"];
+    // Auto Hard Refresh RAM Browser TV setiap jam 03:00 Pagi saat idle
+    const targetHours = ["03"];
     if (targetHours.includes(jamIstiwa) && menitIstiwa === "00" && detikIstiwa === "05") {
       if (lastReloadHour !== jamIstiwa) {
         lastReloadHour = jamIstiwa;
-        console.log("Jadwal pembersihan memori internal");
+        window.location.reload(true);
       }
     }
   }
@@ -1313,7 +1269,6 @@
       guru: guruMap[j.id_guru] || { nama_guru: j.id_guru, foto: '', status_guru: '' }
     }));
 
-    // CEK KBM SELANJUTNYA HARI INI
     const upcomingJadwal = jadwalPelajaranList.filter(j => {
       if (cleanDayStr(j.hari) !== hariIniKapital) return false;
       const start = timeToMinutes(j.jam_mulai);
@@ -1326,7 +1281,6 @@
       globalNextKbmStartMinutes = -1;
     }
 
-    // HITUNG APAKAH SUDAH DALAM WINDOW 60 DETIK MENUJUKAN KBM DENGAN DETAIL DETIK
     const isWithinPreKbmWindow = (globalNextKbmStartMinutes !== -1) && 
       (((globalNextKbmStartMinutes * 60) - ((menitSekarangIstiwa * 60) + detikSekarang)) <= 60);
 
@@ -1350,7 +1304,6 @@
         }));
       }
 
-      // PERBAIKAN BUG 1: JANGAN TRIGGER BREAK MODE JIKA DALAM PRE-KBM WINDOW 60 DETIK
       if (isWithinPreKbmWindow) {
         dismissBreakModeOverlay();
       } else {
