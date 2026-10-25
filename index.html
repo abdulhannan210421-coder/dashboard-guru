@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Digital Signage - Jadwal Guru & Waktu Sholat Falak Realtime</title>
 
-  <!-- webOS TV JS Library -->
-<script src="https://assets.webosenterprise.org/webOSTVjs/webOSTV.js"></script>
-  
   <!-- Tailwind CSS & Font Clean Modern -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -172,17 +169,17 @@
 </head>
 <body class="bg-vibrant text-slate-800 h-screen flex flex-col justify-between p-5 overflow-hidden relative">
 
-<!-- VIDEO KEEP-ALIVE (Dipasang di pojok kanan bawah, z-index di atas modal agar GPU TV tidak mem-suspend video) -->
-<video id="bg-keepalive-video"
-       autoplay
-       loop
-       muted
-       playsinline
-       webkit-playsinline
-       class="fixed bottom-1 right-1 w-2 h-2 object-cover z-[100] opacity-10 pointer-events-none">
-  <source src="keepalive.mp4" type="video/mp4">
-  <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
-</video>
+  <!-- VIDEO KEEP-ALIVE (Dipasang dengan dimensi yang cukup agar GPU TV webOS mendeteksi tayangan video aktif) -->
+  <video id="bg-keepalive-video"
+         autoplay
+         loop
+         muted
+         playsinline
+         webkit-playsinline
+         class="fixed -bottom-10 -right-10 w-36 h-36 object-cover z-0 opacity-20 pointer-events-none">
+    <source src="keepalive.mp4" type="video/mp4">
+    <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
+  </video>
   
   <!-- Audio Element Adzan -->
   <audio id="audio-adzan" preload="auto">
@@ -468,116 +465,109 @@
       fetchData();
     });
 
-    function disableWebOSScreensaver() {
-  if (window.webOS && window.webOS.service) {
-    // Lock layar agar tidak pernah masuk mode Sleep/Screensaver
-    webOS.service.request("luna://com.webos.service.tv.power", {
-      method: "keepScreenOn",
-      parameters: { keepScreenOn: true },
-      onSuccess: function (res) {
-        console.log("KeepScreenOn Aktif:", res);
-      },
-      onFailure: function (err) {
-        console.warn("KeepScreenOn Gagal:", err);
+    // ======================================================
+    // SILENT AUDIO ENGINE (RAHASIA YOUTUBE: MEMUTAR STREAM AUDIO HENING)
+    // TV OS TIDAK AKAN PERNAH MATIKAN LAYAR JIKA AUDIO SYSTEM AKTIF
+    // ======================================================
+    let audioCtx = null;
+
+    function startSilentAudioEngine() {
+      if (audioCtx) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          audioCtx = new AudioContext();
+          // Buat penyangga sinyal audio hening berdurasi 1 detik dan di-loop terus menerus
+          const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
+          const source = audioCtx.createBufferSource();
+          source.buffer = buffer;
+          source.loop = true;
+          source.connect(audioCtx.destination);
+          source.start(0);
+          console.log("Silent Audio Engine Aktif (Screensaver TV Terkunci OFF)");
+        }
+      } catch (e) {
+        console.warn("Silent Audio Engine gagal diinisialisasi:", e);
       }
-    });
-
-    // Blokir fungsi screensaver internal webOS
-    webOS.service.request("luna://com.webos.service.power", {
-      method: "blockScreensaver",
-      parameters: { subscribe: true },
-      onSuccess: function (res) {
-        console.log("Screensaver Terblokir:", res);
-      }
-    });
-  }
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  disableWebOSScreensaver();
-  setInterval(disableWebOSScreensaver, 1800000); // Panggil ulang tiap 30 menit
-});
-    
-// ======================================================
-// KEEP-ALIVE ENGINE OPTIMIZED FOR LG webOS
-// ======================================================
-let keepAliveVideo = null;
-
-function setupVideoKeepAlive() {
-  keepAliveVideo = document.getElementById('bg-keepalive-video');
-  if (!keepAliveVideo) return;
-
-  keepAliveVideo.muted = true;
-  keepAliveVideo.volume = 0.0001; // Jangan 0 murni agar audio pipeline webOS tetap terbaca aktif
-  keepAliveVideo.playsInline = true;
-
-  // Event handler untuk menangani jika video terhenti/error
-  keepAliveVideo.addEventListener('ended', () => {
-    keepAliveVideo.play().catch(() => {});
-  });
-
-  keepAliveVideo.addEventListener('pause', () => {
-    // Jalankan kembali jika tersuspensi
-    setTimeout(() => {
-      keepAliveVideo.play().catch(() => {});
-    }, 1000);
-  });
-
-  keepAliveVideo.addEventListener('error', () => {
-    console.warn("Video error, mencoba reload source...");
-    setTimeout(() => {
-      keepAliveVideo.load();
-      keepAliveVideo.play().catch(() => {});
-    }, 2000);
-  });
-
-  // Play pertama kali
-  keepAliveVideo.play().catch(err => {
-    console.warn("Autoplay terhalang, menunggu interaksi pengguna:", err.message);
-  });
-}
-
-// Cek status berkala tanpa spam .play()
-setInterval(() => {
-  if (keepAliveVideo && keepAliveVideo.paused) {
-    keepAliveVideo.play().catch(() => {});
-  }
-}, 10000); // 10 detik sekali sudah cukup
-
-// Inisialisasi saat DOM Siap
-window.addEventListener('DOMContentLoaded', () => {
-  setupVideoKeepAlive();
-});
-
-// Handling Interaksi Remote / Klik Pertama
-let audioUnlocked = false;
-function handleTVInteraction() {
-  if (keepAliveVideo && keepAliveVideo.paused) {
-    keepAliveVideo.play().catch(() => {});
-  }
-
-  // Fullscreen HANYA dipanggil saat ada gesture/interaksi
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(() => {});
-  }
-
-  if (!audioUnlocked) {
-    const audio = document.getElementById('audio-adzan');
-    if (audio) {
-      audio.play().then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-        audioUnlocked = true;
-        const banner = document.getElementById('banner-audio-notice');
-        if (banner) banner.style.display = 'none';
-      }).catch(() => {});
     }
-  }
-}
 
-window.addEventListener('click', handleTVInteraction);
-window.addEventListener('keydown', handleTVInteraction);
-window.addEventListener('touchstart', handleTVInteraction);
+    // ======================================================
+    // KEEP-ALIVE VIDEO ENGINE (DIOPTIMASI UNTUK BROWSER SMART TV)
+    // ======================================================
+    let keepAliveVideo = null;
+
+    function setupVideoKeepAlive() {
+      keepAliveVideo = document.getElementById('bg-keepalive-video');
+      if (!keepAliveVideo) return;
+
+      keepAliveVideo.muted = true;
+      keepAliveVideo.volume = 0.0001;
+      keepAliveVideo.playsInline = true;
+
+      keepAliveVideo.addEventListener('ended', () => {
+        keepAliveVideo.play().catch(() => {});
+      });
+
+      keepAliveVideo.addEventListener('pause', () => {
+        setTimeout(() => {
+          keepAliveVideo.play().catch(() => {});
+        }, 1000);
+      });
+
+      keepAliveVideo.addEventListener('error', () => {
+        setTimeout(() => {
+          keepAliveVideo.load();
+          keepAliveVideo.play().catch(() => {});
+        }, 2000);
+      });
+
+      keepAliveVideo.play().catch(() => {});
+    }
+
+    setInterval(() => {
+      if (keepAliveVideo && keepAliveVideo.paused) {
+        keepAliveVideo.play().catch(() => {});
+      }
+    }, 10000);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setupVideoKeepAlive();
+    });
+
+    // UNLOCK AUDIO + AKTIFKAN KUNCI LAYAR SAAT INTERAKSI PERTAMA REMOTE
+    let audioUnlocked = false;
+    function handleTVInteraction() {
+      // 1. Jalankan Silent Audio Engine (Mengunci Power Manager TV)
+      startSilentAudioEngine();
+
+      // 2. Pertahankan Play Video
+      if (keepAliveVideo && keepAliveVideo.paused) {
+        keepAliveVideo.play().catch(() => {});
+      }
+
+      // 3. Masuk Fullscreen
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+
+      // 4. Unlock Audio Adzan
+      if (!audioUnlocked) {
+        const audio = document.getElementById('audio-adzan');
+        if (audio) {
+          audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            audioUnlocked = true;
+            const banner = document.getElementById('banner-audio-notice');
+            if (banner) banner.style.display = 'none';
+          }).catch(() => {});
+        }
+      }
+    }
+
+    window.addEventListener('click', handleTVInteraction);
+    window.addEventListener('keydown', handleTVInteraction);
+    window.addEventListener('touchstart', handleTVInteraction);
 
     // FALAK MANDIRI DATABASE
     const DATABASE_BULAN = {
