@@ -466,104 +466,145 @@
       fetchData();
     });
 
-    // KEEP-ALIVE ENGINE
-    let wakeLock = null;
+// ======================================================
+// KEEP-ALIVE ENGINE - VERSI AGRESIF UNTUK LG webOS
+// ======================================================
+let wakeLock = null;
+let lastPlayAttempt = 0;
 
-    async function requestWakeLock() {
-      try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await navigator.wakeLock.request('screen');
-        }
-      } catch (err) {
-        console.warn("Wake Lock Info:", err);
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      // Release yang lama dulu biar bersih
+      if (wakeLock) {
+        try { await wakeLock.release(); } catch(e) {}
       }
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock aktif');
     }
+  } catch (err) {
+    console.warn('Wake Lock gagal:', err.message);
+  }
+}
+
+function forceVideoKeepAlive() {
+  const video = document.getElementById('bg-keepalive-video');
+  if (!video) return;
+
+  // Pastikan properti penting
+  video.muted = true;
+  video.volume = 0;
+  video.loop = true;
+  video.playsInline = true;
+
+  const now = Date.now();
+
+  // Coba play setiap 1.5 detik, meski sudah playing
+  if (now - lastPlayAttempt > 1400) {
+    lastPlayAttempt = now;
+
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          // Berhasil play
+        })
+        .catch((err) => {
+          console.warn('Video play gagal:', err.message);
+          // Coba lagi setelah 800ms
+          setTimeout(() => {
+            video.play().catch(() => {});
+          }, 800);
+        });
+    }
+  }
+
+  // Kalau video error / stuck, coba reload source
+  if (video.error || video.readyState === 0) {
+    console.warn('Video error/stuck, mencoba reload...');
+    video.load();
+    setTimeout(() => video.play().catch(() => {}), 500);
+  }
+
+  // Wake Lock
+  if (document.visibilityState === 'visible') {
+    requestWakeLock();
+  }
+
+  // Coba pertahankan fullscreen
+  if (!document.fullscreenElement && document.visibilityState === 'visible') {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+}
 
 function initYouTubeStyleKeepAlive() {
   const bgVideo = document.getElementById('bg-keepalive-video');
   if (!bgVideo) return;
 
-  // Jangan pakai canvas stream lagi untuk webOS
-  // Biarkan video memakai source dari HTML (keepalive.mp4)
-
-  // Pastikan video langsung play
   bgVideo.muted = true;
   bgVideo.volume = 0;
+  bgVideo.loop = true;
+
+  // Play pertama kali
   bgVideo.play().catch(() => {});
 
-  // Cek berkala
-  setInterval(() => {
-    if (bgVideo.paused || bgVideo.ended) {
-      bgVideo.play().catch(() => {});
-    }
-    requestWakeLock();
-  }, 2000);
+  // Interval agresif
+  setInterval(forceVideoKeepAlive, 1500);
 }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      requestWakeLock();
-      initYouTubeStyleKeepAlive();
-    });
+// Mulai saat halaman siap
+window.addEventListener('DOMContentLoaded', () => {
+  requestWakeLock();
+  initYouTubeStyleKeepAlive();
 
-    document.addEventListener('visibilitychange', async () => {
-      if (wakeLock !== null && document.visibilityState === 'visible') {
-        await requestWakeLock();
-      }
-    });
+  // Extra: coba play lagi setelah 3 detik (kadang webOS butuh delay)
+  setTimeout(() => {
+    forceVideoKeepAlive();
+  }, 3000);
+});
 
-    let audioUnlocked = false;
-    function forceVideoKeepAlive() {
-  const video = document.getElementById('bg-keepalive-video');
-  if (!video) return;
-
-  // Paksa play terus
-  if (video.paused || video.ended || video.readyState < 2) {
-    video.muted = true;
-    video.volume = 0;
-    video.play().catch(e => console.warn("Video play gagal:", e));
-  }
-
-  // Coba Wake Lock (meski di webOS sering gagal, tetap dicoba)
-  if ('wakeLock' in navigator && document.visibilityState === 'visible') {
-    navigator.wakeLock.request('screen').catch(() => {});
-  }
-}
-
-// Jalankan sangat agresif
-setInterval(forceVideoKeepAlive, 2000); // setiap 2 detik
-
-// Juga saat visibility berubah
+// Saat tab kembali visible
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     forceVideoKeepAlive();
+    requestWakeLock();
   }
 });
-    function handleTVInteraction() {
-      requestWakeLock();
-      const bgVideo = document.getElementById('bg-keepalive-video');
-      if (bgVideo && bgVideo.paused) {
-        bgVideo.play().catch(() => {});
-      }
 
-      if (!audioUnlocked) {
-        const audio = document.getElementById('audio-adzan');
-        if (audio) {
-          audio.play().then(() => {
-            audio.pause();
-            audio.currentTime = 0;
-            audioUnlocked = true;
-            const banner = document.getElementById('banner-audio-notice');
-            if (banner) banner.style.display = 'none';
-          }).catch(() => {});
-        }
-      }
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }
+// Unlock audio + fullscreen + play video saat interaksi pertama
+let audioUnlocked = false;
+function handleTVInteraction() {
+  forceVideoKeepAlive();
+  requestWakeLock();
+
+  const bgVideo = document.getElementById('bg-keepalive-video');
+  if (bgVideo) {
+    bgVideo.muted = true;
+    bgVideo.play().catch(() => {});
+  }
+
+  if (!audioUnlocked) {
+    const audio = document.getElementById('audio-adzan');
+    if (audio) {
+      audio.play().then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audioUnlocked = true;
+        const banner = document.getElementById('banner-audio-notice');
+        if (banner) banner.style.display = 'none';
+      }).catch(() => {});
     }
-    window.addEventListener('click', handleTVInteraction);
-    window.addEventListener('keydown', handleTVInteraction);
-    window.addEventListener('touchstart', handleTVInteraction);
+  }
+
+  // Paksa fullscreen
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+}
+
+window.addEventListener('click', handleTVInteraction);
+window.addEventListener('keydown', handleTVInteraction);
+window.addEventListener('touchstart', handleTVInteraction);
 
     // FALAK MANDIRI DATABASE
     const DATABASE_BULAN = {
