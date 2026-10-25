@@ -176,9 +176,8 @@
        muted
        playsinline
        webkit-playsinline
-       class="fixed inset-0 w-full h-full object-cover z-0 opacity-20 pointer-events-none">
+       class="fixed bottom-0 right-0 w-4 h-4 object-cover z-30 opacity-10 pointer-events-none">
   <source src="keepalive.mp4" type="video/mp4">
-  <!-- fallback online -->
   <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-2408-large.mp4" type="video/mp4">
 </video>
 
@@ -467,120 +466,66 @@
     });
 
 // ======================================================
-// KEEP-ALIVE ENGINE - VERSI AGRESIF UNTUK LG webOS
+// KEEP-ALIVE ENGINE OPTIMIZED FOR LG webOS
 // ======================================================
-let wakeLock = null;
-let lastPlayAttempt = 0;
+let keepAliveVideo = null;
 
-async function requestWakeLock() {
-  try {
-    if ('wakeLock' in navigator) {
-      // Release yang lama dulu biar bersih
-      if (wakeLock) {
-        try { await wakeLock.release(); } catch(e) {}
-      }
-      wakeLock = await navigator.wakeLock.request('screen');
-      console.log('Wake Lock aktif');
-    }
-  } catch (err) {
-    console.warn('Wake Lock gagal:', err.message);
-  }
-}
+function setupVideoKeepAlive() {
+  keepAliveVideo = document.getElementById('bg-keepalive-video');
+  if (!keepAliveVideo) return;
 
-function forceVideoKeepAlive() {
-  const video = document.getElementById('bg-keepalive-video');
-  if (!video) return;
+  keepAliveVideo.muted = true;
+  keepAliveVideo.volume = 0.0001; // Jangan 0 murni agar audio pipeline webOS tetap terbaca aktif
+  keepAliveVideo.playsInline = true;
 
-  // Pastikan properti penting
-  video.muted = true;
-  video.volume = 0;
-  video.loop = true;
-  video.playsInline = true;
+  // Event handler untuk menangani jika video terhenti/error
+  keepAliveVideo.addEventListener('ended', () => {
+    keepAliveVideo.play().catch(() => {});
+  });
 
-  const now = Date.now();
+  keepAliveVideo.addEventListener('pause', () => {
+    // Jalankan kembali jika tersuspensi
+    setTimeout(() => {
+      keepAliveVideo.play().catch(() => {});
+    }, 1000);
+  });
 
-  // Coba play setiap 1.5 detik, meski sudah playing
-  if (now - lastPlayAttempt > 1400) {
-    lastPlayAttempt = now;
-
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          // Berhasil play
-        })
-        .catch((err) => {
-          console.warn('Video play gagal:', err.message);
-          // Coba lagi setelah 800ms
-          setTimeout(() => {
-            video.play().catch(() => {});
-          }, 800);
-        });
-    }
-  }
-
-  // Kalau video error / stuck, coba reload source
-  if (video.error || video.readyState === 0) {
-    console.warn('Video error/stuck, mencoba reload...');
-    video.load();
-    setTimeout(() => video.play().catch(() => {}), 500);
-  }
-
-  // Wake Lock
-  if (document.visibilityState === 'visible') {
-    requestWakeLock();
-  }
-
-  // Coba pertahankan fullscreen
-  if (!document.fullscreenElement && document.visibilityState === 'visible') {
-    document.documentElement.requestFullscreen().catch(() => {});
-  }
-}
-
-function initYouTubeStyleKeepAlive() {
-  const bgVideo = document.getElementById('bg-keepalive-video');
-  if (!bgVideo) return;
-
-  bgVideo.muted = true;
-  bgVideo.volume = 0;
-  bgVideo.loop = true;
+  keepAliveVideo.addEventListener('error', () => {
+    console.warn("Video error, mencoba reload source...");
+    setTimeout(() => {
+      keepAliveVideo.load();
+      keepAliveVideo.play().catch(() => {});
+    }, 2000);
+  });
 
   // Play pertama kali
-  bgVideo.play().catch(() => {});
-
-  // Interval agresif
-  setInterval(forceVideoKeepAlive, 1500);
+  keepAliveVideo.play().catch(err => {
+    console.warn("Autoplay terhalang, menunggu interaksi pengguna:", err.message);
+  });
 }
 
-// Mulai saat halaman siap
-window.addEventListener('DOMContentLoaded', () => {
-  requestWakeLock();
-  initYouTubeStyleKeepAlive();
-
-  // Extra: coba play lagi setelah 3 detik (kadang webOS butuh delay)
-  setTimeout(() => {
-    forceVideoKeepAlive();
-  }, 3000);
-});
-
-// Saat tab kembali visible
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    forceVideoKeepAlive();
-    requestWakeLock();
+// Cek status berkala tanpa spam .play()
+setInterval(() => {
+  if (keepAliveVideo && keepAliveVideo.paused) {
+    keepAliveVideo.play().catch(() => {});
   }
+}, 10000); // 10 detik sekali sudah cukup
+
+// Inisialisasi saat DOM Siap
+window.addEventListener('DOMContentLoaded', () => {
+  setupVideoKeepAlive();
 });
 
-// Unlock audio + fullscreen + play video saat interaksi pertama
+// Handling Interaksi Remote / Klik Pertama
 let audioUnlocked = false;
 function handleTVInteraction() {
-  forceVideoKeepAlive();
-  requestWakeLock();
+  if (keepAliveVideo && keepAliveVideo.paused) {
+    keepAliveVideo.play().catch(() => {});
+  }
 
-  const bgVideo = document.getElementById('bg-keepalive-video');
-  if (bgVideo) {
-    bgVideo.muted = true;
-    bgVideo.play().catch(() => {});
+  // Fullscreen HANYA dipanggil saat ada gesture/interaksi
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
   }
 
   if (!audioUnlocked) {
@@ -594,11 +539,6 @@ function handleTVInteraction() {
         if (banner) banner.style.display = 'none';
       }).catch(() => {});
     }
-  }
-
-  // Paksa fullscreen
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(() => {});
   }
 }
 
